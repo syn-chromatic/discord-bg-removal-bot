@@ -5,6 +5,7 @@ Discord bot for automatic background removals that supports PNGs, JPEGs, WEBPs a
 
 
 This library requires Python 3.9
+`https://www.python.org/downloads/release/python-3910`
 
 In order to install the requirements
 ```pip install -r requirements.txt```
