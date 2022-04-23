@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import nextcord as discord
 from nextcord.ext import commands
 
+from variables import variables_instance as instance
 from variables import variables_bot as varbot
 
 if not varbot.BOT_TOKEN:
@@ -20,15 +21,15 @@ intents.reactions = True
 intents.members = True
 
 activity = discord.Activity(type=discord.ActivityType.watching, name=varbot.ACTIVITY_TEXT)
-varbot.BOT_INSTANCE = commands.Bot(command_prefix=varbot.COMMAND_PREFIX, help_command=None, intents=intents, activity=activity)
+instance.BOT_INSTANCE = commands.Bot(command_prefix=varbot.COMMAND_PREFIX, help_command=None, intents=intents, activity=activity)
 
 from bot_commands import rembg_command
 
-@varbot.BOT_INSTANCE.event
+@instance.BOT_INSTANCE.event
 async def on_ready():
     print('Bot is ready.')
     
 try:    
-    varbot.bot_instance.run(varbot.BOT_TOKEN)
+    instance.BOT_INSTANCE.run(varbot.BOT_TOKEN)
 except Exception as error:
     print(error); input(); sys.exit()
