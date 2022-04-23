@@ -7,16 +7,17 @@ Discord bot for automatic background removals that supports PNGs, JPEGs, WEBPs a
 This library requires Python 3.9
 `https://www.python.org/downloads/release/python-3910`
 
+### Installing requirements.txt
 In order to install the requirements
 ```pip install -r requirements.txt```
 
+### ImageMagick Installation
 Then you must install MagickWand/ImageMagick
 
 The version I used was ImageMagick 7.1.0 Q16+HDRI, you can get the Windows version from:
 
 `https://imagemagick.org/script/download.php#windows`
 
-### ImageMagick Installation
 During installation of ImageMagick, make sure to have these options selected:
 
 `Add application directory to your system path`
