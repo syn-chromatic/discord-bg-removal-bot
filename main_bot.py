@@ -17,8 +17,6 @@ if not varbot.COMMAND_PREFIX:
     input(); sys.exit()
 
 intents = discord.Intents.default()
-intents.reactions = True
-intents.members = True
 
 activity = discord.Activity(type=discord.ActivityType.watching, name=varbot.ACTIVITY_TEXT)
 instance.BOT_INSTANCE = commands.Bot(command_prefix=varbot.COMMAND_PREFIX, help_command=None, intents=intents, activity=activity)
