@@ -1,13 +1,17 @@
-import requests, ctypes
+import requests, ctypes, sys
 import nextcord as discord
 
 from io import BytesIO
 from PIL import Image, ImageSequence
-from rembg import remove
 from wand.image import Image as ImageWand
 from wand.api import library as LibraryWand
 
 from variables import variables_bot as varbot
+
+try:
+    from rembg import remove
+except ImportError as error:
+    print(error); input(); sys.exit()
 
 
 async def send_embed(ctx, imageio, format='PNG'):
