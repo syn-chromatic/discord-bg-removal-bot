@@ -131,7 +131,7 @@ async def download_image(url):
             max_px = varbot.max_px_image
    
         elif num_frames > 1:
-            max_px = varbot.max_frames_animated
+            max_px = varbot.max_px_animated
             
         if num_frames > max_num_frames: return None, num_frames, f'`{format} exceeds maximum of {max_num_frames} frames, due to processing times required.\nNumber of Frames: {num_frames}`'
         if format not in image_formats: return None, num_frames, f"'{format} formats are currently not supported.'"
