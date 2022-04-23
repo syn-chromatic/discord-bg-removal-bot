@@ -40,7 +40,7 @@ The version I used was ImageMagick 7.1.0 Q16+HDRI-dll, you can get the Windows v
 Before running the bot you must configure the neccessary variables in `/variables/variables_bot.py`
 ### Required Variables
 - BOT_TOKEN — Retreived from Discord Developer Portal after creating a bot application
-- COMMAND_PREFIX — The prefix is a single-character string used to invoke commands to the bot, i.e. "$"
+- COMMAND_PREFIX — The prefix is a single-character string used to invoke commands to the bot - i.e. "$"
 
 ### Optional Variables
 - ACTIVITY_TEXT — For displaying the bot's activity status, such as *"Watching [Text]"*, can be left empty
