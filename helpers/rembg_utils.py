@@ -7,7 +7,7 @@ from rembg import remove
 from wand.image import Image as ImageWand
 from wand.api import library as LibraryWand
 
-from ..variables import variables_bot as varbot
+from variables import variables_bot as varbot
 
 
 async def send_embed(ctx, imageio, format='PNG'):

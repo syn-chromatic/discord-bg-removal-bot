@@ -1,6 +1,6 @@
 import nextcord as discord
-from ..variables import variables_instance as instance
-from ..helpers import rembg_utils
+from variables import variables_instance as instance
+from helpers import rembg_utils
 
 bot = instance.BOT_INSTANCE
 
