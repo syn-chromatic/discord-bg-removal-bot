@@ -44,9 +44,9 @@ Before running the bot you must configure the neccessary variables in `/variable
 
 ### Optional Variables
 - ACTIVITY_TEXT — For displaying the bot's activity status, such as *"Watching [Text]"*, can be left empty
-- max_frames_animated — The bot will reject to process requested GIFs or WebPs that have more than the assigned frames count
+- max_frames_animated — The bot will reject to process requested GIFs WebPs or Videos that have more than the assigned frames count
 - max_px_image — The bot will reject to process requested images (PNGs, JPEGs, and single-frame WebPs) that are above the assigned pixel count in width or height
-- max_px_animated — Same as max_px_image, but it instead applies to animated images (GIFs and multi-frame WebPs)
+- max_px_animated — Same as max_px_image, but it instead applies to animated images (GIFs, multi-frame WebPs or Videos)
 - max_video_fps — The bot will attempt to remove frames from input until it matches the assigned maximum or below
 
 Run `main_bot.py` to start the bot.
