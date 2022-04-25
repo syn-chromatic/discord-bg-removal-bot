@@ -177,7 +177,7 @@ async def download_image(url):
         
         if num_frames > max_num_frames: 
             PIL_Image = None
-            errorEmbed = constructEmbedNotice(f"{format} exceeds maximum of {max_num_frames} frames, due to processing times required.\n"
+            errorEmbed = constructEmbedNotice(f"{format} exceeds maximum of {max_num_frames} frames.\n"
                                               f"**Frame Count:** {num_frames}")
             
             return PIL_Image, num_frames, errorEmbed
