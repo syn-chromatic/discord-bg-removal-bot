@@ -177,22 +177,22 @@ async def download_image(url):
         
         if num_frames > max_num_frames: 
             PIL_Image = None
-            errorEmbed = constructEmbedNotice(f"{format} exceeds maximum of {max_num_frames} frames, due to processing times required.\n\
-                                              **Frame Count:** {num_frames}")
+            errorEmbed = constructEmbedNotice(f"{format} exceeds maximum of {max_num_frames} frames, due to processing times required.\n"
+                                              "**Frame Count:** {num_frames}")
             
             return PIL_Image, num_frames, errorEmbed
         
         if width > max_px or height > max_px: 
             PIL_Image = None
-            errorEmbed = constructEmbedNotice(f"{format} needs to be <{max_px}px in width or height.\n\
-                                              **Resolution:** {width}x{height}")
+            errorEmbed = constructEmbedNotice(f"{format} needs to be <{max_px}px in width or height.\n"
+                                              f"**Resolution:** {width}x{height}")
             
             return PIL_Image, num_frames, errorEmbed
             
         if width < minimum_px or height < minimum_px:
             PIL_Image = None
-            errorEmbed = constructEmbedNotice(f"{format} needs to be >{minimum_px}px in width or height.\n\
-                                              **Resolution:** {width}x{height}")    
+            errorEmbed = constructEmbedNotice(f"{format} needs to be >{minimum_px}px in width or height.\n"
+                                              f"**Resolution:** {width}x{height}")    
             
             return PIL_Image, num_frames, errorEmbed     
          
@@ -309,20 +309,20 @@ async def download_video(url):
 
         if adjusted_framecount > max_num_frames: 
             Video_IO = None
-            errorEmbed = constructEmbedNotice(f'Video exceeds maximum of {max_num_frames} frames.\n\
-                                              **Frame Count:** {frame_count}')
+            errorEmbed = constructEmbedNotice(f"Video exceeds maximum of {max_num_frames} frames.\n"
+                                              f"**Frame Count:** {frame_count}")
             return Video_IO, errorEmbed
         
         if width > max_px or height > max_px: 
             Video_IO = None
-            errorEmbed = constructEmbedNotice(f"Video needs to be <{max_px}px in width or height.\n\
-                                              **Resolution:** {width}x{height}")
+            errorEmbed = constructEmbedNotice(f"Video needs to be <{max_px}px in width or height.\n"
+                                              f"**Resolution:** {width}x{height}")
             return Video_IO, errorEmbed
         
         if width < minimum_px or height < minimum_px:
             Video_IO = None
-            errorEmbed = constructEmbedNotice(f"Video needs to be >{minimum_px}px in width or height.\n\
-                                              **Resolution:** {width}x{height}")  
+            errorEmbed = constructEmbedNotice(f"Video needs to be >{minimum_px}px in width or height.\n"
+                                              f"**Resolution:** {width}x{height}")  
             return Video_IO, errorEmbed      
          
     except Exception as error:
