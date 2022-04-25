@@ -251,7 +251,7 @@ async def getVideoFrames(bytes_file):
     videoDetails = getVideoDetails(bytes_file)
     av_container = av.open(copy(bytes_file), mode='r')
 
-    max_fps = 15
+    max_fps = varbot.max_video_fps
     fps_ratio = math.ceil(videoDetails['fps']/max_fps)
 
     adjusted_frame_count = math.ceil(videoDetails['frame_count'] / fps_ratio)
