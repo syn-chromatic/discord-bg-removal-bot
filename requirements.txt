@@ -1,3 +1,5 @@
 nextcord==2.0.0a10 
 wand==0.6.7
 rembg==2.0.19
+sniffpy==1.0.0
+av==9.2.0
