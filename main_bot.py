@@ -10,12 +10,19 @@ from variables import variables_instance as instance
 from variables import variables_bot as varbot
 
 if not varbot.BOT_TOKEN:
-    print('Configure your Bot Token variable in /variables/variables_bot.py')
+    print("Configure your Bot Token variable in '/variables/variables_bot.py'")
     input(); sys.exit()
+    
 if not varbot.COMMAND_PREFIX:
-    print('Configure your Command Prefix, used to invoke a command, such as "-" in /variables/variables_bot.py') 
+    print("Configure your Command Prefix in '/variables/variables_bot.py'") 
     input(); sys.exit()
-
+    
+try:
+    if varbot.RELAY_CHANNEL_ID: int(varbot.RELAY_CHANNEL_ID)
+except ValueError or TypeError:
+    print("RELAY_CHANNEL_ID variable in '/variables/variables_bot.py' must be an integer")
+    input(); sys.exit()
+    
 intents = discord.Intents.default()
 
 activity = discord.Activity(type=discord.ActivityType.watching, name=varbot.ACTIVITY_TEXT)

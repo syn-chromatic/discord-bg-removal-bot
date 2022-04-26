@@ -43,10 +43,13 @@ Before running the bot you must configure the neccessary variables in `/variable
 - COMMAND_PREFIX — The prefix is a single-character string used to invoke commands to the bot - i.e. "$"
 
 ### Optional Variables
-- ACTIVITY_TEXT — For displaying the bot's activity status, such as *"Watching [Text]"*, can be left empty
-- max_frames_animated — The bot will reject to process requested GIFs WebPs or Videos that have more than the assigned frames count
-- max_px_image — The bot will reject to process requested images (PNGs, JPEGs, and single-frame WebPs) that are above the assigned pixel count in width or height
-- max_px_animated — Same as max_px_image, but it instead applies to animated images (GIFs, multi-frame WebPs or Videos)
-- max_video_fps — The bot will attempt to remove frames from input until it matches the assigned maximum or below
+- ACTIVITY_TEXT — For displaying the bot's activity status, such as *"Watching TEXT"*
+- RELAY_CHANNEL_ID — For sending images to a different channel from where the command is used then retrieving the image url and inserting it into an embed for previewing of processed images
+
+### Rembg Command Variables
+- max_frames_animated — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
+- max_px_image — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height
+- max_px_animated — The bot will reject to process requested multi-frame inputs that are above the assigned pixel count in width or height
+- max_video_fps — The bot will reduce fps by removing alternating frames from input until it matches the assigned maximum or below
 
 Run `main_bot.py` to start the bot.

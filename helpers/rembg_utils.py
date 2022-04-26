@@ -5,6 +5,7 @@ from io import BytesIO
 from PIL import Image, ImageSequence
 
 from variables import variables_bot as varbot
+from variables import variables_instance as instance
 
 try:
     import nextcord as discord
@@ -15,6 +16,7 @@ try:
 except ImportError as error:
     print(error); input(); sys.exit()
     
+bot = instance.BOT_INSTANCE
 
 image_mime_types = ['png', 'jpeg', 'gif', 'webp']
 video_mime_types = ['mp4']
@@ -22,18 +24,16 @@ video_mime_types = ['mp4']
 async def mime_type_sniff(url):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36'}
     try:
-        response = requests.get(url, stream=True, headers=headers)      
+        response = requests.get(url, stream=True, headers=headers)     
     except requests.exceptions.ConnectionError:
-        type_validity = False
-        mime_type = None
-        errorEmbed = constructEmbedNotice('Invalid Link.')
+        type_validity, mime_type = False, None
+        errorEmbed = constructEmbedNotice('Connection Error.')
         return type_validity, mime_type, errorEmbed
-
+    
     mime_type = sniffpy.sniff(response.content).subtype
     
     if mime_type in image_mime_types + video_mime_types: 
-        type_check = True 
-        errorEmbed = None
+        type_check, errorEmbed = True, None
         return type_check, mime_type, errorEmbed
     
     else: 
@@ -54,7 +54,7 @@ def constructEmbedNotice(noticeMessage):
         return EmbedNotice
 
 
-async def send_embed(ctx, Image_IO, format='PNG'):
+async def send_result_embed(ctx, Image_IO, format='PNG'):
     image_filename = f'removed_background.{format}'
     file = discord.File(fp=Image_IO, filename=image_filename)
     
@@ -62,52 +62,111 @@ async def send_embed(ctx, Image_IO, format='PNG'):
     
     embed=discord.Embed(title=f"", description=descriptionText)
     embed.set_image(url=f"attachment://{image_filename}")
-    await ctx.reply(file=file, embed=embed, mention_author=False)   
+    await ctx.reply(file=file, embed=embed, mention_author=False)    
    
     
-def embed_iterator(idx, total_idx, initialization=False):
-    if not initialization:
-        embed=discord.Embed(title=f'', description=f'Processing {idx+1} out of {total_idx} frames.')
-    else:
+def embedIterator(idx, total_idx, relay=False, relay_url=None, relay_error=None, initialization=False):
+    if initialization:
         embed=discord.Embed(title=f'', description=f'Initializing..')
-    return embed
+        return embed
+    
+    else:
+        descriptionIterator = f'Processed {idx+1} out of {total_idx} frames.'
+        descriptionRelayError = (f'{descriptionIterator}\n\n'
+                                        f'**Relay Channel Error:** {relay_error}')
+        
+        if relay and relay_error:
+            embed = discord.Embed(description=descriptionRelayError)
+        
+        else:
+            embed=discord.Embed(title=f'', description=descriptionIterator)
+            if relay: embed.set_image(url=relay_url)
+
+        return embed     
 
 
 async def handle_image(ctx, image_url):
     Image_IO, num_frames, errorEmbed = await download_image(image_url)  
     
-    if Image_IO is None: 
+    if Image_IO is None and errorEmbed: 
         await ctx.reply(embed=errorEmbed, mention_author=False); return
     
     elif num_frames == 1:
         rembg_image = await remove_background(Image_IO)
-        await send_embed(ctx, rembg_image)
+        await send_result_embed(ctx, rembg_image)
         
     elif num_frames > 1:  
-        await process_animated(ctx, Image_IO)
+        animated_FramesDict = await getAnimatedFrames(Image_IO)
+        await process_frames(ctx, animated_FramesDict)
+
+
+async def handle_video(ctx, image_url):
+    Video_IO, errorEmbed = await download_video(image_url)  
+    
+    if Video_IO is None: 
+        await ctx.reply(embed=errorEmbed, mention_author=False); return
+    
+    else: 
+        video_FramesDict = await getVideoFrames(Video_IO)
+        await process_frames(ctx, video_FramesDict)
 
                 
-async def process_animated(ctx, Image_IO):                
-    animated_ImageFrames = await getAnimatedFrames(Image_IO)
-    num_frames = len(animated_ImageFrames) 
-    iterator_messsage = await ctx.channel.send(embed=embed_iterator(0, 0, initialization=True))
+async def relayTransmitter(ctx, Image_IO):
+    relay_channel = bot.get_channel(varbot.RELAY_CHANNEL_ID)
     
-    for idx, data in animated_ImageFrames.items():
-        print(f'Processing {idx+1} out of {num_frames}')
-        await iterator_messsage.edit(embed=embed_iterator(idx, num_frames))
+    if relay_channel:
+        try:
+            relay_message = await relay_channel.send(file=discord.File(copy(Image_IO), 
+                                                    filename='relay_image.png'))
+            relay_url = relay_message.attachments[0]
+        except discord.errors.Forbidden as e:
+            error = 'Missing Premissions to send messages to channel'
+            relay_message, relay_url = None, None
+            return relay_message, relay_url, error
+        
+    else:
+        error = 'Invalid Channel ID or Missing Premissions to view it'
+        relay_message, relay_url = None, None
+        return relay_message, relay_url, error
+    
+    return relay_message, relay_url, None
+      
+      
+async def process_frames(ctx, FramesDict):                
+    num_frames = len(FramesDict) 
+    iterator_messsage = await ctx.channel.send(embed=embedIterator(0, 0, initialization=True))
+    
+    previous_relay = None
+    
+    for idx, data in FramesDict.items():
         data['image'] = await remove_background(Image.open(data['image']))
-    await iterator_messsage.delete()
+        
+        if varbot.RELAY_CHANNEL_ID:
+            relay_message, relay_url, error = await relayTransmitter(ctx, data['image'])
+            
+            if relay_message and relay_url:
+                if previous_relay: await previous_relay.delete()
+                await iterator_messsage.edit(embed=embedIterator(idx, num_frames, relay=True, relay_url=relay_url))
+                previous_relay = relay_message
+                
+            else:
+                await iterator_messsage.edit(embed=embedIterator(idx, num_frames, relay=True, relay_error=error))
+        else:
+            await iterator_messsage.edit(embed=embedIterator(idx, num_frames))
+
+    rembg_GIF_IO = await reconstruct_gif(FramesDict)
+    await send_result_embed(ctx, rembg_GIF_IO, format='gif')
     
-    rembg_gif = await reconstruct_gif(animated_ImageFrames)
-    await send_embed(ctx, rembg_gif, format='gif')
+    if previous_relay: await previous_relay.delete()
+    await iterator_messsage.delete()     
         
         
-async def reconstruct_gif(image_frames):     
+async def reconstruct_gif(FramesDict):     
     BackgroundDispose = ctypes.c_int(2)
     Image_IO = BytesIO()
 
     with ImageWand() as wand:
-        for idx, data in image_frames.items():
+        for idx, data in FramesDict.items():
             with ImageWand(blob=data['image']) as wand_image:
                 
                 with ImageWand(width = wand_image.width,
@@ -118,7 +177,7 @@ async def reconstruct_gif(image_frames):
                     LibraryWand.MagickSetImageDispose(wand_bg_composite.wand, BackgroundDispose)
                     wand.sequence.append(wand_bg_composite)
         
-        for idx, data in image_frames.items():
+        for idx, data in FramesDict.items():
             with wand.sequence[idx] as frame:
                 frame.delay = int(data['duration']/10)
                 
@@ -128,7 +187,7 @@ async def reconstruct_gif(image_frames):
         
     Image_IO.seek(0)
     return Image_IO
-    
+
     
 def PIL_To_BytesIO(Image_PIL, format):
     Image_IO = BytesIO()
@@ -142,8 +201,8 @@ async def getAnimatedFrames(Image_IO):
     return image_frames
         
 
-async def remove_background(img_PIL):
-    rembg_PIL = remove(img_PIL)
+async def remove_background(Image_PIL):
+    rembg_PIL = remove(Image_PIL)
     rembg_IO = PIL_To_BytesIO(rembg_PIL, 'PNG')
     return rembg_IO
 
@@ -206,31 +265,6 @@ async def download_image(url):
     return PIL_Image, num_frames, errorEmbed
 
 
-async def handle_video(ctx, image_url):
-    Video_IO, errorEmbed = await download_video(image_url)  
-    
-    if Video_IO is None: 
-        await ctx.reply(embed=errorEmbed, mention_author=False); return
-    
-    else: 
-        await process_video(ctx, Video_IO)
-
-
-async def process_video(ctx, Video_IO):                
-    video_ImageFrames = await getVideoFrames(Video_IO)
-    num_frames = len(video_ImageFrames) 
-    iterator_messsage = await ctx.channel.send(embed=embed_iterator(0, 0, initialization=True))
-    
-    for idx, data in video_ImageFrames.items():
-        print(f'Processing {idx+1} out of {num_frames}')
-        await iterator_messsage.edit(embed=embed_iterator(idx, num_frames))
-        data['image'] = await remove_background(Image.open(data['image']))
-    await iterator_messsage.delete()
-    
-    rembg_gif = await reconstruct_gif(video_ImageFrames)
-    await send_embed(ctx, rembg_gif, format='gif')
-
-
 def getVideoDetails(bytes_file):
     try:
         av_container = av.open(copy(bytes_file), mode='r')
@@ -273,7 +307,7 @@ async def getVideoFrames(bytes_file):
     return video_ImageFrames
 
 
-async def recalculate_fps(max_fps, video_fps, video_framecount, video_duration):
+async def getAdjustedFrameData(max_fps, video_fps, video_framecount, video_duration):
     fps_ratio = math.ceil(video_fps / max_fps)
 
     adjusted_frame_count = math.ceil(video_framecount / fps_ratio)
@@ -302,11 +336,11 @@ async def download_video(url):
         minimum_px = 32
         
         if fps > max_fps:
-            _ , _, adjusted_framecount, _ = await recalculate_fps(max_fps, fps, frame_count, duration)
+            _ , _, adjusted_framecount, _ = await getAdjustedFrameData(max_fps, fps, frame_count, duration)
         else: 
             adjusted_framecount = frame_count
         
-
+            
         if adjusted_framecount > max_num_frames: 
             Video_IO = None
             errorEmbed = constructEmbedNotice(f"Video exceeds maximum of {max_num_frames} frames.\n"
