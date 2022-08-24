@@ -1,0 +1,1 @@
+from bot_commands import rembg_command # noqa

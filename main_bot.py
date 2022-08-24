@@ -1,40 +1,45 @@
 import sys
-from pathlib import Path
+from variables import bot_config
+from bot_instance import BOT
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Initialization
+import inits  # noqa
+import events # noqa
 
-import nextcord as discord
-from nextcord.ext import commands
 
-from variables import variables_instance as instance
-from variables import variables_bot as varbot
+def report_error(error):
+    input(error)
+    sys.exit()
 
-if not varbot.BOT_TOKEN:
-    print("Configure your Bot Token variable in '/variables/variables_bot.py'")
-    input(); sys.exit()
-    
-if not varbot.COMMAND_PREFIX:
-    print("Configure your Command Prefix in '/variables/variables_bot.py'") 
-    input(); sys.exit()
-    
-try:
-    if varbot.RELAY_CHANNEL_ID: int(varbot.RELAY_CHANNEL_ID)
-except ValueError or TypeError:
-    print("RELAY_CHANNEL_ID variable in '/variables/variables_bot.py' must be an integer")
-    input(); sys.exit()
-    
-intents = discord.Intents.default()
 
-activity = discord.Activity(type=discord.ActivityType.watching, name=varbot.ACTIVITY_TEXT)
-instance.BOT_INSTANCE = commands.Bot(command_prefix=varbot.COMMAND_PREFIX, help_command=None, intents=intents, activity=activity)
+def run_bot():
+    bot_token = bot_config.BOT_TOKEN
+    command_prefix = bot_config.COMMAND_PREFIX
+    relay_channel_id = bot_config.RELAY_CHANNEL_ID
 
-from bot_commands import rembg_command
+    if not bot_token:
+        report_error(
+            "Misconfiguration in /variables/bot_keys.py\n"
+            "Configure the BOT_TOKEN variable."
+        )
 
-@instance.BOT_INSTANCE.event
-async def on_ready():
-    print('Bot is ready.')
-    
-try:    
-    instance.BOT_INSTANCE.run(varbot.BOT_TOKEN)
-except Exception as error:
-    print(error); input(); sys.exit()
+    if not command_prefix:
+        report_error(
+            "Misconfiguration in /variables/bot_config.py\n"
+            "Configure the COMMAND_PREFIX variable."
+        )
+
+    if not isinstance(relay_channel_id, int) and relay_channel_id is not None:
+        report_error(
+            "Misconfiguration in /variables/bot_config.py\n"
+            "RELAY_CHANNEL_ID must be an integer."
+        )
+
+    try:
+        BOT.run(bot_token)
+    except Exception as error:
+        report_error(error)
+
+
+if __name__ == "__main__":
+    run_bot()
