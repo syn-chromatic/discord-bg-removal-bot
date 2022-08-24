@@ -32,7 +32,7 @@ async def download_image(
     try:
         PIL_Image = Image.open(image_data)
         width, height = PIL_Image.size
-        format = PIL_Image.format
+        image_format = PIL_Image.format
 
         max_num_frames = rm_vars.max_frames_animated
         minimum_px = 32
@@ -42,19 +42,19 @@ async def download_image(
 
         if num_frames > max_num_frames:
             error_embed = await gen_utils.construct_embed(
-                f"{format} exceeds maximum of {max_num_frames} frames.\n"
+                f"{image_format} exceeds maximum of {max_num_frames} frames.\n"
                 f"**Frame Count:** {num_frames}"
             )
 
         elif width > max_px or height > max_px:
             error_embed = await gen_utils.construct_embed(
-                f"{format} needs to be <{max_px}px in width or height.\n"
+                f"{image_format} needs to be <{max_px}px in width or height.\n"
                 f"**Resolution:** {width}x{height}"
             )
 
         elif width < minimum_px or height < minimum_px:
             error_embed = await gen_utils.construct_embed(
-                f"{format} needs to be >{minimum_px}px in width or height.\n"
+                f"{image_format} needs to be >{minimum_px}px in width or height.\n"
                 f"**Resolution:** {width}x{height}"
             )
 

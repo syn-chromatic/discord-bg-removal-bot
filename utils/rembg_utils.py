@@ -21,9 +21,9 @@ from nextcord.errors import Forbidden
 from nextcord.ext.commands import Context
 
 
-async def send_result_embed(ctx: Context, Image_IO: BytesIO, format="PNG"):
-    image_filename = f"removed_background.{format}"
-    file = nextcord.File(fp=Image_IO, filename=image_filename)
+async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG"):
+    image_filename = f"removed_background.{image_format}"
+    file = nextcord.File(fp=image_io, filename=image_filename)
 
     descriptionText = "Background removed!"
 
@@ -56,7 +56,7 @@ def embed_iterator(
         return embed
 
 
-async def relay_transmitter(ctx: Context, Image_IO: BytesIO):
+async def relay_transmitter(Image_IO: BytesIO):
     relay_channel_id: Union[int, None] = bot_config.RELAY_CHANNEL_ID
     relay_channel = BOT.get_channel(relay_channel_id) if relay_channel_id else None
 
@@ -93,7 +93,7 @@ async def process_frames(ctx: Context, FramesDict):
 
         if bot_config.RELAY_CHANNEL_ID:
             relay_message, relay_url, error = await relay_transmitter(
-                ctx, data["image"]
+                data["image"]
             )
 
             if relay_message and relay_url:
@@ -114,7 +114,7 @@ async def process_frames(ctx: Context, FramesDict):
             await iterator_messsage.edit(embed=embed_iterator(idx, num_frames))
 
     rembg_GIF_IO = await reconstruct_gif(FramesDict)
-    await send_result_embed(ctx, rembg_GIF_IO, format="gif")
+    await send_result_embed(ctx, rembg_GIF_IO, image_format="gif")
 
     if previous_relay:
         await previous_relay.delete()
@@ -128,20 +128,20 @@ async def reconstruct_gif(FramesDict) -> BytesIO:
     with ImageWand() as wand:
         WandSequence: Sequence = wand.sequence
         for idx, data in FramesDict.items():
-            with ImageWand(blob=data["image"]) as wand_image:
-                with ImageWand(
-                    width=wand_image.width, height=wand_image.height, background=None
-                ) as wand_bg_composite:
+            with (
+                ImageWand(blob=data["image"]) as wand_image,
+                ImageWand(width=wand_image.width,
+                          height=wand_image.height,
+                          background=None) as wand_bg_composite):
 
-                    wand_bg_composite: ImageWand = wand_bg_composite.composite(
-                        wand_image, 0, 0
-                    )
-                    LibraryWand.MagickSetImageDispose(
-                        wand_bg_composite.wand, BackgroundDispose
-                    )
+                wand_bg_composite: ImageWand = wand_bg_composite.composite(
+                    wand_image, 0, 0
+                )
+                LibraryWand.MagickSetImageDispose(
+                    wand_bg_composite.wand, BackgroundDispose
+                )
 
-                    WandSequence.append(wand_bg_composite)
-                    # wand.sequence.append(wand_bg_composite)
+                WandSequence.append(wand_bg_composite)
 
         for idx, data in FramesDict.items():
             frame = WandSequence[idx]
@@ -156,11 +156,11 @@ async def reconstruct_gif(FramesDict) -> BytesIO:
     return Image_IO
 
 
-def pil_to_bytesio(Image_PIL: Image.Image, format: str) -> BytesIO:
-    Image_IO = BytesIO()
-    Image_PIL.save(Image_IO, format=format)
-    Image_IO.seek(0)
-    return Image_IO
+def pil_to_bytesio(image_pil: Image.Image, image_format: str) -> BytesIO:
+    image_io = BytesIO()
+    image_pil.save(image_io, format=image_format)
+    image_io.seek(0)
+    return image_io
 
 
 async def get_animated_frames(Image_IO) -> dict[int, dict[str, BytesIO]]:
