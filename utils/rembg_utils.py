@@ -12,13 +12,13 @@ from copy import copy
 from io import BytesIO
 from PIL import Image, ImageSequence
 
-from bot_instance import BOT
 from variables.command_variables import rembg_variables as rm_vars
 from variables import bot_config
 from typing import Union
 from nextcord import Message, Embed
 from nextcord.errors import Forbidden
 from nextcord.ext.commands import Context
+from nextcord import TextChannel, Guild
 
 
 async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG"):
@@ -56,26 +56,38 @@ def embed_iterator(
         return embed
 
 
-async def relay_transmitter(Image_IO: BytesIO):
+async def get_channel(
+    ctx: Context, channel_id: Union[int, None]
+) -> Union[TextChannel, None]:
+    guild: Union[Guild, None] = ctx.guild
+    channel = None
+    if channel_id:
+        channel = guild.get_channel(channel_id) if guild else None
+        channel = channel if isinstance(channel, TextChannel) else None
+    return channel
+
+
+async def relay_transmitter(ctx: Context, Image_IO: BytesIO):
     relay_channel_id: Union[int, None] = bot_config.RELAY_CHANNEL_ID
-    relay_channel = BOT.get_channel(relay_channel_id) if relay_channel_id else None
+    relay_channel = await get_channel(ctx, relay_channel_id)
 
     relay_message: Union[Message, None] = None
     relay_url: Union[str, None] = None
     error: Union[str, None] = None
+    relay_file: nextcord.File = nextcord.File(
+        copy(Image_IO), filename="relay_image.png"
+    )
 
     if relay_channel:
         try:
-            relay_message = await relay_channel.send(
-                file=nextcord.File(copy(Image_IO), filename="relay_image.png")
-            )
+            relay_message = await relay_channel.send(file=relay_file)
             relay_url = str(relay_message.attachments[0]) if relay_message else None
 
         except Forbidden:
-            error = "Missing Premissions to send messages to channel"
+            error = "Missing Permissions to send messages to channel"
 
     else:
-        error = "Invalid Channel ID or Missing Premissions to view it"
+        error = "Invalid Channel ID or Missing Permissions to view it"
 
     return relay_message, relay_url, error
 
@@ -93,7 +105,7 @@ async def process_frames(ctx: Context, FramesDict):
 
         if bot_config.RELAY_CHANNEL_ID:
             relay_message, relay_url, error = await relay_transmitter(
-                data["image"]
+                ctx, data["image"]
             )
 
             if relay_message and relay_url:
@@ -130,9 +142,10 @@ async def reconstruct_gif(FramesDict) -> BytesIO:
         for idx, data in FramesDict.items():
             with (
                 ImageWand(blob=data["image"]) as wand_image,
-                ImageWand(width=wand_image.width,
-                          height=wand_image.height,
-                          background=None) as wand_bg_composite):
+                ImageWand(
+                    width=wand_image.width, height=wand_image.height, background=None
+                ) as wand_bg_composite,
+            ):
 
                 wand_bg_composite: ImageWand = wand_bg_composite.composite(
                     wand_image, 0, 0

@@ -1,7 +1,3 @@
-####################################
-###      COMMAND VARIABLES       ###
-####################################
-
 # The bot will reject to process requested multi-frame
 # inputs that have more than the assigned frames count
 max_frames_animated: int = 50

@@ -9,6 +9,7 @@ BOT: Bot = Bot(
     intents=intents,
     activity=nextcord.Activity(
                 type=nextcord.ActivityType.watching,
-                name=bot_config.ACTIVITY_TEXT),
-    help_command=None
+                name=bot_config.ACTIVITY_TEXT)
     )
+
+BOT.help_command = None
