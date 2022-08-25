@@ -35,9 +35,9 @@ async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG")
 def embed_iterator(
     idx, total_idx, relay=False, relay_url=None, relay_error=None, initialization=False
 ) -> Embed:
+
     if initialization:
         embed = nextcord.Embed(description="Initializing..")
-        return embed
 
     else:
         descriptionIterator = f"Processed {idx+1} out of {total_idx} frames."
@@ -53,7 +53,7 @@ def embed_iterator(
             if relay:
                 embed.set_image(url=relay_url)
 
-        return embed
+    return embed
 
 
 async def get_channel(
@@ -101,29 +101,32 @@ async def process_frames(ctx: Context, FramesDict):
     previous_relay = None
 
     for idx, data in FramesDict.items():
-        data["image"] = await remove_background(Image.open(data["image"]))
+        image_data = await remove_background(Image.open(data["image"]))
+        if isinstance(image_data, Image.Image):
+            data["image"] = image_data
+            if bot_config.RELAY_CHANNEL_ID:
+                relay_message, relay_url, error = await relay_transmitter(
+                    ctx, data["image"]
+                )
 
-        if bot_config.RELAY_CHANNEL_ID:
-            relay_message, relay_url, error = await relay_transmitter(
-                ctx, data["image"]
-            )
-
-            if relay_message and relay_url:
-                if previous_relay:
-                    await previous_relay.delete()
-                await iterator_messsage.edit(
-                    embed=embed_iterator(
-                        idx, num_frames, relay=True, relay_url=relay_url
+                if relay_message and relay_url:
+                    if previous_relay:
+                        await previous_relay.delete()
+                    await iterator_messsage.edit(
+                        embed=embed_iterator(
+                            idx, num_frames, relay=True, relay_url=relay_url
+                        )
                     )
-                )
-                previous_relay = relay_message
+                    previous_relay = relay_message
 
+                else:
+                    await iterator_messsage.edit(
+                        embed=embed_iterator(
+                            idx, num_frames, relay=True, relay_error=error
+                        )
+                    )
             else:
-                await iterator_messsage.edit(
-                    embed=embed_iterator(idx, num_frames, relay=True, relay_error=error)
-                )
-        else:
-            await iterator_messsage.edit(embed=embed_iterator(idx, num_frames))
+                await iterator_messsage.edit(embed=embed_iterator(idx, num_frames))
 
     rembg_GIF_IO = await reconstruct_gif(FramesDict)
     await send_result_embed(ctx, rembg_GIF_IO, image_format="gif")
@@ -184,10 +187,12 @@ async def get_animated_frames(Image_IO) -> dict[int, dict[str, BytesIO]]:
     return image_frames
 
 
-async def remove_background(Image_PIL) -> BytesIO:
-    rembg_PIL = remove(Image_PIL)
-    assert isinstance(rembg_PIL, Image.Image)
-    rembg_IO = pil_to_bytesio(rembg_PIL, "PNG")
+async def remove_background(Image_PIL: Image.Image) -> Union[BytesIO, None]:
+    rembg_IO: Union[BytesIO, None] = None
+
+    rembg_PIL = remove(data=Image_PIL)
+    if isinstance(rembg_PIL, Image.Image):
+        rembg_IO = pil_to_bytesio(rembg_PIL, "PNG")
     return rembg_IO
 
 
