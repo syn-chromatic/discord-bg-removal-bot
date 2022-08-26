@@ -22,6 +22,7 @@ from nextcord import TextChannel, Guild
 
 
 async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG"):
+    """Sends an image embed to the channel the command was invoked in."""
     image_filename = f"removed_background.{image_format}"
     file = nextcord.File(fp=image_io, filename=image_filename)
 
@@ -35,6 +36,7 @@ async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG")
 def embed_iterator(
     idx, total_idx, relay=False, relay_url=None, relay_error=None, initialization=False
 ) -> Embed:
+    """Iterator for the relay channel."""
     if initialization:
         embed = nextcord.Embed(description="Initializing..")
 
@@ -58,6 +60,7 @@ def embed_iterator(
 async def get_channel(
     ctx: Context, channel_id: Union[int, None]
 ) -> Union[TextChannel, None]:
+    """Get a channel by ID."""
     guild: Union[Guild, None] = ctx.guild
     channel = None
     if channel_id:
@@ -69,6 +72,7 @@ async def get_channel(
 async def relay_transmitter(
     ctx: Context, Image_IO: BytesIO
 ) -> tuple[Union[Message, None], Union[str, None], Union[str, None]]:
+    """Transmitter for the relay channel."""
     relay_channel_id: Union[int, None] = bot_config.RELAY_CHANNEL_ID
     relay_channel = await get_channel(ctx, relay_channel_id)
 
@@ -94,6 +98,7 @@ async def relay_transmitter(
 
 
 async def process_frames(ctx: Context, FramesDict):
+    """Process animated image or video frames."""
     num_frames = len(FramesDict)
     iterator_messsage = await ctx.channel.send(
         embed=embed_iterator(0, 0, initialization=True)
@@ -138,6 +143,7 @@ async def process_frames(ctx: Context, FramesDict):
 
 
 async def reconstruct_gif(FramesDict) -> BytesIO:
+    """Reconstructs a gif from the frames in the dictionary."""
     BackgroundDispose = ctypes.c_int(2)
     Image_IO = BytesIO()
 
@@ -174,6 +180,7 @@ async def reconstruct_gif(FramesDict) -> BytesIO:
 
 
 def pil_to_bytesio(image_pil: Image.Image, image_format: str) -> BytesIO:
+    """ Converts a PIL image to a BytesIO buffer."""
     image_io = BytesIO()
     image_pil.save(image_io, format=image_format)
     image_io.seek(0)
@@ -181,6 +188,7 @@ def pil_to_bytesio(image_pil: Image.Image, image_format: str) -> BytesIO:
 
 
 async def get_animated_frames(Image_IO) -> dict[int, dict[str, BytesIO]]:
+    """Creates a dictionary of frames from an animated image."""
     image_frames = {
         idx: {"image": pil_to_bytesio(frame, "PNG"), "duration": frame.info["duration"]}
         for idx, frame in enumerate(ImageSequence.Iterator(Image_IO))
@@ -189,6 +197,7 @@ async def get_animated_frames(Image_IO) -> dict[int, dict[str, BytesIO]]:
 
 
 async def remove_background(Image_PIL: Image.Image) -> Union[BytesIO, None]:
+    """Remove the background of an image."""
     rembg_IO: Union[BytesIO, None] = None
 
     rembg_PIL = remove(data=Image_PIL)
@@ -198,6 +207,7 @@ async def remove_background(Image_PIL: Image.Image) -> Union[BytesIO, None]:
 
 
 async def get_num_frames(pil_image: Image.Image) -> int:
+    """Get the number of frames in the image."""
     try:
         num_frames = pil_image.n_frames
     except Exception:
@@ -207,6 +217,7 @@ async def get_num_frames(pil_image: Image.Image) -> int:
 
 
 async def get_max_pixels(num_frames: int) -> int:
+    """Determines the maximum number of pixels."""
     if num_frames > 1:
         max_px = rm_vars.max_px_animated
     else:
@@ -216,6 +227,7 @@ async def get_max_pixels(num_frames: int) -> int:
 
 
 async def get_video_details(bytes_file) -> Union[dict[str, int], None]:
+    """Creates a dict with the video details."""
     video_details: Union[dict[str, int], None] = None
 
     try:
@@ -247,6 +259,7 @@ async def get_video_details(bytes_file) -> Union[dict[str, int], None]:
 
 
 async def get_video_frames(bytes_file) -> Union[dict[str, Union[BytesIO, int]], None]:
+    """Create a dictionary of frames from a video file."""
     video_ImageFrames: Union[dict, None] = None
     video_details = await get_video_details(bytes_file)
 
@@ -279,6 +292,7 @@ async def get_video_frames(bytes_file) -> Union[dict[str, Union[BytesIO, int]], 
 async def get_adjusted_frame_data(
     max_fps, video_fps, video_framecount, video_duration
 ) -> tuple[int, int, int, float]:
+    """Adjusts the frame data to match the max_fps."""
     fps_ratio = math.ceil(video_fps / max_fps)
 
     adjusted_frame_count = math.ceil(video_framecount / fps_ratio)
@@ -291,6 +305,7 @@ async def get_adjusted_frame_data(
 async def get_adjusted_frame_count(
     max_fps, video_fps, video_framecount, video_duration
 ) -> int:
+    """Returns the adjusted frame count for the video."""
     _, _, adjusted_frame_count, _ = await get_adjusted_frame_data(
         max_fps, video_fps, video_framecount, video_duration
     )

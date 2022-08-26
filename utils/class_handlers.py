@@ -18,6 +18,7 @@ class MediaHandler:
         self.url = url
 
     async def handler(self):
+        """Handle the type of media and removes the background."""
         image_mime_types = ExtensionConfig().image_mime_types
         video_mime_types = ExtensionConfig().video_mime_types
 
@@ -31,10 +32,12 @@ class MediaHandler:
             await self.video_handler()
 
     async def get_mime_type(self):
+        """Get MimeType."""
         _, mime_type, error_embed = await mime_type_sniff(self.url)
         return mime_type, error_embed
 
     async def image_handler(self):
+        """Handle image uploads."""
         image, num_frames, error_embed = await download_image(self.url)
 
         if error_embed:
@@ -50,6 +53,7 @@ class MediaHandler:
             await process_frames(self.ctx, animated_FramesDict)
 
     async def video_handler(self):
+        """Handles video uploads."""
         video, error_embed = await download_video(self.url)
 
         if not video and error_embed:

@@ -9,6 +9,7 @@ from utils.rembg_dataclass import ExtensionConfig
 
 
 async def construct_embed(message: str) -> Embed:
+    """Constructs an embed with the message provided."""
     if isinstance(message, str):
         embed = Embed(description=message, type="rich", color=0xC82323)
     else:
@@ -18,6 +19,7 @@ async def construct_embed(message: str) -> Embed:
 
 
 async def mime_type_sniff(url) -> tuple[bool, Union[str, None], Union[Embed, None]]:
+    """Mime type sniffing"""
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 6.1; WOW64) "
