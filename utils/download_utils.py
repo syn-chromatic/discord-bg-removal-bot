@@ -14,7 +14,6 @@ async def download_image(
 ) -> tuple[Union[Image.Image, None], Union[int, None], Union[Embed, None]]:
     """Download an image from a URL and return the image as an Image object,
     number of frames, and the error embed if there's an error."""
-
     PIL_Image: Union[Image.Image, None] = None
     num_frames: Union[int, None] = None
     error_embed: Union[Embed, None] = None
@@ -72,7 +71,6 @@ async def download_image(
 async def download_video(url):
     """Downloads a video from a given URL. Returns the video as a BytesIO object,
     and the error embed if there was an error."""
-
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 6.1; WOW64) "
