@@ -13,6 +13,7 @@ from utils.rembg_utils import (
 
 
 class MediaHandler:
+    """MediaHandler class which handles different types of media files for rembg."""
     def __init__(self, ctx: Context, url: str):
         self.ctx = ctx
         self.url = url
