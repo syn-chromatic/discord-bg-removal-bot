@@ -35,7 +35,6 @@ async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG")
 def embed_iterator(
     idx, total_idx, relay=False, relay_url=None, relay_error=None, initialization=False
 ) -> Embed:
-
     if initialization:
         embed = nextcord.Embed(description="Initializing..")
 
@@ -67,7 +66,9 @@ async def get_channel(
     return channel
 
 
-async def relay_transmitter(ctx: Context, Image_IO: BytesIO):
+async def relay_transmitter(
+    ctx: Context, Image_IO: BytesIO
+) -> tuple[Union[Message, None], Union[str, None], Union[str, None]]:
     relay_channel_id: Union[int, None] = bot_config.RELAY_CHANNEL_ID
     relay_channel = await get_channel(ctx, relay_channel_id)
 

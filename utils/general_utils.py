@@ -6,7 +6,7 @@ from typing import Union
 
 from sniffpy.mimetype import MIMEType, parse_mime_type
 from utils.rembg_dataclass import ExtensionConfig
-from utils.class_handlers import Image, Video
+from utils.class_handlers import MediaHandler
 
 
 async def construct_embed(message: str) -> Embed:
@@ -58,15 +58,10 @@ async def mime_type_sniff(url) -> tuple[bool, Union[str, None], Union[Embed, Non
 
 async def get_extension_class(
     url,
-) -> tuple[Union[Image, Video, None],
+) -> tuple[Union[MediaHandler, None],
            Union[Embed, None]]:
     _, mime_type, error_embed = await mime_type_sniff(url)
 
-    if mime_type in ExtensionConfig().image_mime_types:
-        class_type = Image()
-    elif mime_type in ExtensionConfig().video_mime_types:
-        class_type = Video()
-    else:
-        class_type = None
+    class_type = MediaHandler(mime_type)
 
     return class_type, error_embed
