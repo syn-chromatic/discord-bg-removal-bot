@@ -180,7 +180,7 @@ async def reconstruct_gif(FramesDict) -> BytesIO:
 
 
 def pil_to_bytesio(image_pil: Image.Image, image_format: str) -> BytesIO:
-    """ Converts a PIL image to a BytesIO buffer."""
+    """Converts a PIL image to a BytesIO buffer."""
     image_io = BytesIO()
     image_pil.save(image_io, format=image_format)
     image_io.seek(0)
