@@ -6,7 +6,6 @@ from typing import Union
 
 from sniffpy.mimetype import MIMEType, parse_mime_type
 from utils.rembg_dataclass import ExtensionConfig
-from utils.class_handlers import MediaHandler
 
 
 async def construct_embed(message: str) -> Embed:
@@ -54,14 +53,3 @@ async def mime_type_sniff(url) -> tuple[bool, Union[str, None], Union[Embed, Non
             "Detected file mime type as: " f"'{mime_type}', which is not supported."
         )
     return type_check, mime_type, error_embed
-
-
-async def get_extension_class(
-    url,
-) -> tuple[Union[MediaHandler, None],
-           Union[Embed, None]]:
-    _, mime_type, error_embed = await mime_type_sniff(url)
-
-    class_type = MediaHandler(mime_type)
-
-    return class_type, error_embed
