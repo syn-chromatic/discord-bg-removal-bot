@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 @dataclass
 class ExtensionConfig:
     """File Type Extension Configuration"""
+
     file_extensions: list[str] = field(
         default_factory=lambda: [
             "png", "jpg", "jpeg",
