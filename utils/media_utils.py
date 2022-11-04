@@ -38,7 +38,8 @@ class VideoDecomposeBase:
         video_input = av.open(self._video_io, mode="r")
         return video_input
 
-    def _get_stream(self, video_input: InputContainer) -> VideoStream:
+    @staticmethod
+    def _get_stream(video_input: InputContainer) -> VideoStream:
         video_stream = video_input.streams.video[0]
         return video_stream
 
@@ -59,7 +60,8 @@ class VideoDecomposeBase:
         frame_duration = Fraction(frame_duration)
         return frame_duration
 
-    def _pil_to_bytesio(self, image: Image.Image, format: str) -> BytesIO:
+    @staticmethod
+    def _pil_to_bytesio(image: Image.Image, format: str) -> BytesIO:
         image_io = BytesIO()
         image.save(image_io, format=format)
         image_io.seek(0)
@@ -141,7 +143,8 @@ class AnimatedDecomposeBase:
         framecount_ratio = math.ceil(framecount / self._max_framecount)
         return framecount_ratio
 
-    def _get_resolution(self, frame: Image.Image) -> tuple[int, int]:
+    @staticmethod
+    def _get_resolution(frame: Image.Image) -> tuple[int, int]:
         width = frame.width
         height = frame.height
         return width, height
@@ -154,7 +157,8 @@ class AnimatedDecomposeBase:
         frame_duration = Fraction(frame_duration)
         return frame_duration
 
-    def _pil_to_bytesio(self, image: Image.Image, format: str) -> BytesIO:
+    @staticmethod
+    def _pil_to_bytesio(image: Image.Image, format: str) -> BytesIO:
         image_io = BytesIO()
         image.save(image_io, format=format)
         image_io.seek(0)
@@ -231,28 +235,34 @@ class ComposeGIFBase:
             return self._video_frame_and_duration(frame)
         return self._animated_frame_and_duration(frame)
 
-    def _retrieve_resolution(self, frame: Union[VideoFrame, AnimatedFrame]):
+    @staticmethod
+    def _retrieve_resolution(frame: Union[VideoFrame, AnimatedFrame]):
         if isinstance(frame, VideoFrame):
             return frame.width, frame.height
         return frame.width, frame.height
 
-    def _video_frames(self, data: VideoData):
+    @staticmethod
+    def _video_frames(data: VideoData):
         return data.frames
 
-    def _animated_frames(self, data: AnimatedData):
+    @staticmethod
+    def _animated_frames(data: AnimatedData):
         return data.frames
 
-    def _video_frame_and_duration(self, video_frame: VideoFrame):
+    @staticmethod
+    def _video_frame_and_duration(video_frame: VideoFrame):
         image = video_frame.image
         duration = video_frame.duration
         return image, duration
 
-    def _animated_frame_and_duration(self, animated_frame: AnimatedFrame):
+    @staticmethod
+    def _animated_frame_and_duration(animated_frame: AnimatedFrame):
         image = animated_frame.image
         duration = animated_frame.duration
         return image, duration
 
-    def _pil_to_bytesio(self, image: Image.Image, format: str) -> BytesIO:
+    @staticmethod
+    def _pil_to_bytesio(image: Image.Image, format: str) -> BytesIO:
         image_io = BytesIO()
         image.save(image_io, format=format)
         image_io.seek(0)

@@ -38,7 +38,8 @@ class MimeTypeSniff():
 
         return response
 
-    def get_valid_extensions(self):
+    @staticmethod
+    def get_valid_extensions():
         valid_extensions = [
             *ExtensionConfig().image_mime_types,
             *ExtensionConfig().video_mime_types,

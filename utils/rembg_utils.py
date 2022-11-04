@@ -43,33 +43,38 @@ class BGRemoveBase:
             return self._ins_animated_frame(image, frame)
         return self._ins_image_frame(image, frame)
 
-    def _video_frame(self, video_frame: VideoFrame):
+    @staticmethod
+    def _video_frame(video_frame: VideoFrame):
         image = video_frame.image
         return image
 
-    def _animated_frame(self, animated_frame: AnimatedFrame):
+    @staticmethod
+    def _animated_frame(animated_frame: AnimatedFrame):
         image = animated_frame.image
         return image
 
-    def _image_frame(self, image_frame: ImageFrame):
+    @staticmethod
+    def _image_frame(image_frame: ImageFrame):
         image = image_frame.image
         return image
 
-    def _ins_video_frame(self, image: ImageType, frame: VideoFrame) -> VideoFrame:
+    @staticmethod
+    def _ins_video_frame(image: ImageType, frame: VideoFrame) -> VideoFrame:
         frame.image = image
         return frame
 
-    def _ins_animated_frame(
-        self, image: ImageType, frame: AnimatedFrame
-    ) -> AnimatedFrame:
+    @staticmethod
+    def _ins_animated_frame(image: ImageType, frame: AnimatedFrame) -> AnimatedFrame:
         frame.image = image
         return frame
 
-    def _ins_image_frame(self, image: ImageType, frame: ImageFrame) -> ImageFrame:
+    @staticmethod
+    def _ins_image_frame(image: ImageType, frame: ImageFrame) -> ImageFrame:
         frame.image = image
         return frame
 
-    def _image_conversion(self, image: Union[ImageType, bytes, ndarray]) -> ImageType:
+    @staticmethod
+    def _image_conversion(image: Union[ImageType, bytes, ndarray]) -> ImageType:
         if isinstance(image, ImageType):
             return image
         elif isinstance(image, bytes):
@@ -114,39 +119,49 @@ class BGProcessBase:
 
         return self._image(frame)
 
-    def _video_frames(self, data: VideoData):
+    @staticmethod
+    def _video_frames(data: VideoData):
         return data.frames
 
-    def _animated_frames(self, data: AnimatedData):
+    @staticmethod
+    def _animated_frames(data: AnimatedData):
         return data.frames
 
-    def _image_frames(self, data: ImageFrame):
+    @staticmethod
+    def _image_frames(data: ImageFrame):
         return [data]
 
-    def _video_image(self, video_frame: VideoFrame):
+    @staticmethod
+    def _video_image(video_frame: VideoFrame):
         return video_frame.image
 
-    def _animated_image(self, animated_frame: AnimatedFrame):
+    @staticmethod
+    def _animated_image(animated_frame: AnimatedFrame):
         return animated_frame.image
 
-    def _image(self, image_frame: ImageFrame):
+    @staticmethod
+    def _image(image_frame: ImageFrame):
         return image_frame.image
 
-    def _pil_to_bytesio(self, image: ImageType):
+    @staticmethod
+    def _pil_to_bytesio(image: ImageType):
         image_io = BytesIO()
         image.save(image_io, format="PNG")
         image_io.seek(0)
         return image_io
 
-    def _process_image(self, frame: FRAME_TYPES):
+    @staticmethod
+    def _process_image(frame: FRAME_TYPES):
         frame = BGRemove(frame).remove_background()
         return frame
 
-    def _init_config(self):
+    @staticmethod
+    def _init_config():
         relay_config = RelayConfig(init=True, image=None, idx=0, total_idx=0)
         return relay_config
 
-    def _relay_config(self, image: BytesIO, idx: int, total_idx: int):
+    @staticmethod
+    def _relay_config(image: BytesIO, idx: int, total_idx: int):
         relay_config = RelayConfig(
             init=False,
             image=image,

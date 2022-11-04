@@ -79,7 +79,8 @@ class IteratorBase:
             if isinstance(channel, TextChannel):
                 return channel
 
-    def _init_embed(self, message: str):
+    @staticmethod
+    def _init_embed(message: str):
         embed = nextcord.Embed(
             description=message,
         )

@@ -60,7 +60,8 @@ class DownloadMedia:
         self.content = self.response_file.content
         self.mime_type = self.response_file.mime_type
 
-    def get_num_frames(self, image_pil: Image.Image) -> int:
+    @staticmethod
+    def get_num_frames(image_pil: Image.Image) -> int:
         """Get the number of frames in the image."""
         try:
             num_frames = image_pil.n_frames
@@ -68,7 +69,8 @@ class DownloadMedia:
             num_frames = 1
         return num_frames
 
-    def get_max_pixels(self, num_frames: int) -> int:
+    @staticmethod
+    def get_max_pixels(num_frames: int) -> int:
         """Determines the maximum number of pixels."""
         if num_frames > 1:
             max_px = rm_vars.max_px_animated
@@ -86,7 +88,8 @@ class DownloadMedia:
 
         return image_pil
 
-    def decompose_animated(self, image_pil: Image.Image):
+    @staticmethod
+    def decompose_animated(image_pil: Image.Image):
         try:
             animated_data = AnimatedDecompose(image_pil).create_animated_data()
         except Exception:
@@ -124,7 +127,8 @@ class DownloadMedia:
 
         return self.decompose_animated(image_pil)
 
-    def decompose_video(self, video_io: BytesIO) -> VideoData:
+    @staticmethod
+    def decompose_video(video_io: BytesIO) -> VideoData:
         try:
             video_data = VideoDecompose(video_io).create_video_data()
         except Exception:
