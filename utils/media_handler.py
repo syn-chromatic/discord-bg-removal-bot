@@ -72,7 +72,7 @@ class MediaHandler(MediaHandlerBase):
                 nextcord_file = nextcord.File(out_io, filename="output.gif")
                 return nextcord_file
 
-            elif isinstance(data_out, ImageFrame):
+            if isinstance(data_out, ImageFrame):
                 out_io = BytesIO()
                 data_out.image.save(out_io, "PNG")
                 out_io.seek(0)

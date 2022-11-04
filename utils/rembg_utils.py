@@ -31,7 +31,7 @@ class BGRemoveBase:
         if isinstance(self._frame, VideoFrame):
             return self._video_frame(self._frame)
 
-        elif isinstance(self._frame, AnimatedFrame):
+        if isinstance(self._frame, AnimatedFrame):
             return self._animated_frame(self._frame)
 
         return self._image_frame(self._frame)
@@ -39,8 +39,10 @@ class BGRemoveBase:
     def _insert_image(self, image: ImageType, frame: FRAME_TYPES):
         if isinstance(frame, VideoFrame):
             return self._ins_video_frame(image, frame)
-        elif isinstance(frame, AnimatedFrame):
+
+        if isinstance(frame, AnimatedFrame):
             return self._ins_animated_frame(image, frame)
+
         return self._ins_image_frame(image, frame)
 
     @staticmethod
@@ -77,8 +79,10 @@ class BGRemoveBase:
     def _image_conversion(image: Union[ImageType, bytes, ndarray]) -> ImageType:
         if isinstance(image, ImageType):
             return image
-        elif isinstance(image, bytes):
+
+        if isinstance(image, bytes):
             return Image.open(image)
+
         return Image.fromarray(image)
 
 
@@ -105,7 +109,7 @@ class BGProcessBase:
         if isinstance(self._data, VideoData):
             return self._video_frames(self._data)
 
-        elif isinstance(self._data, AnimatedData):
+        if isinstance(self._data, AnimatedData):
             return self._animated_frames(self._data)
 
         return self._image_frames(self._data)
@@ -114,7 +118,7 @@ class BGProcessBase:
         if isinstance(frame, VideoFrame):
             return self._video_image(frame)
 
-        elif isinstance(frame, AnimatedFrame):
+        if isinstance(frame, AnimatedFrame):
             return self._animated_image(frame)
 
         return self._image(frame)
