@@ -49,9 +49,8 @@ Before running the bot you must configure the necessary variables in `/variables
 ## Optional Command Configuration
 You can find the variables in `/variables/command_variables/rembg_variables.py`
 ### Rembg Command Variables
-- max_frames_animated — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
+- max_frames — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
 - max_px_image — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height
 - max_px_animated — The bot will reject to process requested multi-frame inputs that are above the assigned pixel count in width or height
-- max_video_fps — The bot will reduce fps by removing alternating frames from input until it matches the assigned maximum or below
 
 Run `main_bot.py` to start the bot.
