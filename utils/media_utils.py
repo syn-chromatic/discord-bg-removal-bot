@@ -15,6 +15,7 @@ from PIL import Image, ImageSequence
 from typing import Union
 from fractions import Fraction
 
+from variables.command_variables import rembg_variables as rm_vars
 from utils.media_dataclasses import (
     VideoData,
     VideoFrame,
@@ -30,7 +31,7 @@ class VideoDecomposeBase:
         self._video_stream = self._get_stream(self._video_input)
         self._frames: list[VideoFrame] = []
         self._framecount = 0
-        self._max_framecount = 50
+        self._max_framecount = rm_vars.max_frames
         self._framecount_ratio = self._get_frame_ratio()
         self._total_duration: Fraction = Fraction(0)
 
@@ -130,7 +131,7 @@ class AnimatedDecomposeBase:
         self._sequence_frames = self._get_sequence_frames()
         self._frames: list[AnimatedFrame] = []
         self._framecount = 0
-        self._max_framecount = 50
+        self._max_framecount = rm_vars.max_frames
         self._framecount_ratio = self._get_frame_ratio()
         self._total_duration: Fraction = Fraction(0)
 

@@ -102,13 +102,14 @@ class DownloadMedia:
         width, height = image_pil.size
         image_format = image_pil.format
 
-        max_frames = rm_vars.max_frames_animated
+        max_frames = rm_vars.max_frames
         num_frames = self.get_num_frames(image_pil)
 
         min_px = 32
         max_px = self.get_max_pixels(num_frames)
 
-        if num_frames > max_frames:
+        # Divided by 2 due to automatic frame disposal
+        if (num_frames / 2) > max_frames:
             raise ExceedsMaxFrames(image_format, num_frames, max_frames)
 
         elif width > max_px or height > max_px:
@@ -141,7 +142,7 @@ class DownloadMedia:
 
         width, height = video_data.width, video_data.height
 
-        max_frames = rm_vars.max_frames_animated
+        max_frames = rm_vars.max_frames
         num_frames = video_data.framecount
 
         min_px = 32
