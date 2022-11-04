@@ -91,7 +91,8 @@ class IteratorBase:
     ):
         idx = relay_config.idx
         total_idx = relay_config.total_idx
-        description = f"Processed {idx+1} out of {total_idx} frames."
+
+        description = f"Processed {idx} out of {total_idx} frames."
         description += f"\n{self._error}"
 
         embed = nextcord.Embed(description=description)

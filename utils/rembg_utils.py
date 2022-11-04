@@ -165,7 +165,7 @@ class BGProcessBase:
         return relay_config
 
     @staticmethod
-    def _relay_config(image: BytesIO, idx: int, total_idx: int):
+    def _relay_config(image: Union[BytesIO, None], idx: int, total_idx: int):
         relay_config = RelayConfig(
             init=False,
             image=image,
@@ -185,15 +185,20 @@ class BGProcess(BGProcessBase):
 
         relay_config = self._init_config()
         await iterator.send(relay_config)
-
         total_idx = len(self._frames)
 
         for idx, frame in enumerate(self._frames):
+            if idx == 0:
+                relay_config = self._relay_config(None, 0, total_idx)
+                await iterator.send(relay_config)
+
             bg_frame = self._process_image(frame)
             bg_image = self._retrieve_image(bg_frame)
             bg_image_io = self._pil_to_bytesio(bg_image)
 
-            relay_config = self._relay_config(bg_image_io, idx, total_idx)
-            await iterator.send(relay_config)
+            if idx + 1 != total_idx:
+                relay_config = self._relay_config(bg_image_io, idx + 1, total_idx)
+                await iterator.send(relay_config)
+
         await iterator.clean()
         return self._data

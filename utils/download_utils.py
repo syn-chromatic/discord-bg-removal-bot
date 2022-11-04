@@ -28,28 +28,28 @@ class VideoDecompositionError(Exception):
 
 
 class ExceedsMaxFrames(Exception):
-    def __init__(self, format, num_frames, max_frames):
+    def __init__(self, format: str, num_frames: int, max_frames: int):
         msg = (
             f"{format} exceeds maximum of {max_frames} frames.\n"
-            f"**Frame Count:** {num_frames}"
+            f"Frame Count: {num_frames}"
         )
         super().__init__(msg)
 
 
 class ExceedsMaxResolution(Exception):
-    def __init__(self, format, width, height, max_px):
+    def __init__(self, format: str, width: int, height: int, max_px: int):
         msg = (
-            f"{format} needs to be <{max_px}px in width or height.\n"
-            f"**Resolution:** {width}x{height}"
+            f"{format.upper()} needs to be <{max_px}px in width or height.\n"
+            f"Resolution: {width}x{height}"
         )
         super().__init__(msg)
 
 
 class SubceedsMinResolution(Exception):
-    def __init__(self, format, width, height, min_px):
+    def __init__(self, format: str, width: int, height: int, min_px: int):
         msg = (
-            f"{format} needs to be >{min_px}px in width or height.\n"
-            f"**Resolution:** {width}x{height}"
+            f"{format.upper()} needs to be >{min_px}px in width or height.\n"
+            f"Resolution: {width}x{height}"
         )
         super().__init__(msg)
 
@@ -100,7 +100,7 @@ class DownloadMedia:
         image_pil = self.open_image()
 
         width, height = image_pil.size
-        image_format = image_pil.format
+        image_format = str(image_pil.format)
 
         max_frames = rm_vars.max_frames
         num_frames = self.get_num_frames(image_pil)
