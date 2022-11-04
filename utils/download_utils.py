@@ -6,7 +6,7 @@ from typing import Union
 from variables.command_variables import rembg_variables as rm_vars
 
 from utils.media_dataclasses import ResponseFile, ImageFrame, VideoData, AnimatedData
-from utils.media_utils import VideoDecompose, AnimatedDecompose
+from utils.media_utils import VideoDecompose, AnimatedDecompose, DisposeDuplicateFrames
 
 
 class ImageError(Exception):
@@ -92,6 +92,7 @@ class DownloadMedia:
     def decompose_animated(image_pil: Image.Image):
         try:
             animated_data = AnimatedDecompose(image_pil).create_animated_data()
+            animated_data = DisposeDuplicateFrames().dispose_animated(animated_data)
         except Exception:
             raise ImageDecompositionError()
         return animated_data
@@ -132,6 +133,7 @@ class DownloadMedia:
     def decompose_video(video_io: BytesIO) -> VideoData:
         try:
             video_data = VideoDecompose(video_io).create_video_data()
+            video_data = DisposeDuplicateFrames().dispose_video(video_data)
         except Exception:
             raise VideoDecompositionError()
         return video_data

@@ -1,5 +1,6 @@
 import ctypes
 import math
+import numpy as np
 
 import av
 from av.container import InputContainer
@@ -11,6 +12,7 @@ from wand.api import library as LibraryWand
 
 from io import BytesIO
 from PIL import Image, ImageSequence
+from PIL.Image import Image as ImageType
 
 from typing import Union
 from fractions import Fraction
@@ -71,6 +73,7 @@ class VideoDecomposeBase:
     def _create_frame(self, frame: av.VideoFrame, frame_duration: Fraction):
         width, height = self._get_resolution()
         frame_image = frame.to_image()
+        frame_image.convert("RGBA")
         video_frame = VideoFrame(
             image=frame_image, width=width, height=height, duration=frame_duration
         )
@@ -150,9 +153,15 @@ class AnimatedDecomposeBase:
         height = frame.height
         return width, height
 
+    @staticmethod
+    def _correct_duration(duration: Union[int, None]):
+        if not duration or (duration and duration < 20):
+            duration = 20
+        return duration
+
     def _frame_duration(self, frame: Image.Image):
         duration = frame.info["duration"]
-        duration = 1 if not duration else duration
+        duration = self._correct_duration(duration)
         duration_s = Fraction(duration, 1000)
         frame_duration = duration_s * self._framecount_ratio
         frame_duration = Fraction(frame_duration)
@@ -169,6 +178,7 @@ class AnimatedDecomposeBase:
         self, frame: Image.Image, frame_duration: Fraction
     ) -> AnimatedFrame:
         width, height = self._get_resolution(frame)
+        frame = frame.convert("RGBA")
 
         animated_frame = AnimatedFrame(
             image=frame,
@@ -301,3 +311,150 @@ class ComposeGIF(ComposeGIFBase):
 
         self._animated_io.seek(0)
         return self._animated_io
+
+
+class DisposeDuplicateBase:
+    def __post_init__(self, data: Union[VideoData, AnimatedData]):
+        self._data = data
+        self._frames = self._retrieve_frames()
+
+    def _retrieve_frames(self):
+        if isinstance(self._data, VideoData):
+            return self._video_frames(self._data)
+        return self._animated_frames(self._data)
+
+    def _retrieve_frame_and_duration(self, frame: Union[VideoFrame, AnimatedFrame]):
+        if isinstance(frame, VideoFrame):
+            return self._video_frame_and_duration(frame)
+        return self._animated_frame_and_duration(frame)
+
+    def _insert_new_duration(
+        self, frame: Union[VideoFrame, AnimatedFrame], duration: Fraction
+    ):
+        if isinstance(frame, VideoFrame):
+            return self._insert_video_frame_duration(frame, duration)
+        return self._insert_anim_frame_duration(frame, duration)
+
+    def _remove_frame(self, idx: int):
+        if isinstance(self._data, VideoData):
+            self._remove_video_frame(idx, self._data)
+
+        elif isinstance(self._data, AnimatedData):
+            return self._remove_animated_frame(idx, self._data)
+
+    @staticmethod
+    def _remove_video_frame(idx: int, data: VideoData):
+        data.frames.pop(idx)
+        data.framecount -= 1
+
+    @staticmethod
+    def _remove_animated_frame(idx: int, data: AnimatedData):
+        data.frames.pop(idx)
+        data.framecount -= 1
+
+    @staticmethod
+    def _retrieve_resolution(frame: Union[VideoFrame, AnimatedFrame]):
+        if isinstance(frame, VideoFrame):
+            return frame.width, frame.height
+        return frame.width, frame.height
+
+    @staticmethod
+    def _video_frames(data: VideoData):
+        return data.frames
+
+    @staticmethod
+    def _animated_frames(data: AnimatedData):
+        return data.frames
+
+    @staticmethod
+    def _video_frame_and_duration(video_frame: VideoFrame):
+        image = video_frame.image
+        duration = video_frame.duration
+        return image, duration
+
+    @staticmethod
+    def _animated_frame_and_duration(animated_frame: AnimatedFrame):
+        image = animated_frame.image
+        duration = animated_frame.duration
+        return image, duration
+
+    @staticmethod
+    def _insert_video_frame_duration(video_frame: VideoFrame, duration: Fraction):
+        video_frame.duration = duration
+        return video_frame
+
+    @staticmethod
+    def _insert_anim_frame_duration(animated_frame: AnimatedFrame, duration: Fraction):
+        animated_frame.duration = duration
+        return animated_frame
+
+    @staticmethod
+    def mse(a: ImageType, b: ImageType):
+        nd_a = np.asarray(a, dtype="float")
+        nd_b = np.asarray(b, dtype="float")
+
+        nd_a = np.divide(nd_a, 100)
+        nd_b = np.divide(nd_b, 100)
+
+        image_diff = np.subtract(nd_a, nd_b)
+        image_diff = image_diff**2
+        image_sum = np.sum(image_diff)
+
+        mse_error = np.divide(image_sum, (nd_a.shape[0] * nd_b.shape[1]))
+        return mse_error
+
+    def _dispose(
+        self,
+        frames: Union[list[VideoFrame], list[AnimatedFrame]],
+        mse_strength: float = 0.05,
+    ):
+        previous_frame = None
+        duplicate_idx = []
+        duplicate_duration = Fraction(0)
+
+        for idx, frame in enumerate(frames):
+            image, duration = self._retrieve_frame_and_duration(frame)
+            width, height = self._retrieve_resolution(frame)
+
+            if previous_frame:
+                prev_image, _ = self._retrieve_frame_and_duration(previous_frame)
+                prev_width, prev_height = self._retrieve_resolution(previous_frame)
+
+                if width == prev_width and height == prev_height:
+                    mse_error = self.mse(image, prev_image)
+
+                    if mse_error < mse_strength:
+                        duplicate_duration += duration
+                        duplicate_idx.append(idx)
+                        self._insert_new_duration(previous_frame, duplicate_duration)
+                        continue
+
+                shift = 0
+
+                for idx2 in duplicate_idx:
+                    idx2 -= shift
+                    self._remove_frame(idx2)
+                    shift += 1
+
+                previous_frame = None
+                duplicate_idx = []
+                duplicate_duration = Fraction(0)
+                duplicate_duration += duration
+
+            if not previous_frame:
+                previous_frame = frame
+                duplicate_duration += duration
+
+
+class DisposeDuplicateFrames(DisposeDuplicateBase):
+    def dispose_animated(self, data: AnimatedData, mse_strength: float = 0.05):
+        super().__post_init__(data)
+        animated_frames = self._animated_frames(data)
+        self._dispose(animated_frames, mse_strength)
+        return data
+
+    def dispose_video(self, data: VideoData, mse_strength: float = 0.05):
+        super().__post_init__(data)
+        animated_frames = self._video_frames(data)
+        self._dispose(animated_frames, mse_strength)
+        return data
