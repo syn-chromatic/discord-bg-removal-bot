@@ -1,312 +1,180 @@
-import ctypes
-import math
-import nextcord
-import av
-from rembg import remove
-from wand.image import Image as ImageWand
-from wand.sequence import SingleImage
-from wand.sequence import Sequence
-from wand.api import library as LibraryWand
-
-from copy import copy
-from io import BytesIO
-from PIL import Image, ImageSequence
-
-from variables.command_variables import rembg_variables as rm_vars
-from variables import bot_config
-from typing import Union
-from nextcord import Message, Embed
-from nextcord.errors import Forbidden
 from nextcord.ext.commands import Context
-from nextcord import TextChannel, Guild
+
+from rembg import remove
+from io import BytesIO
+from typing import Union
+
+from PIL import Image
+from PIL.Image import Image as ImageType
+from numpy import ndarray
+
+from utils.embed_utils import RelayIterator
+from utils.media_dataclasses import (
+    VideoFrame,
+    AnimatedFrame,
+    VideoData,
+    AnimatedData,
+    ImageFrame,
+    RelayConfig,
+)
 
 
-async def send_result_embed(ctx: Context, image_io: BytesIO, image_format="PNG"):
-    """Sends an image embed to the channel the command was invoked in."""
-    image_filename = f"removed_background.{image_format}"
-    file = nextcord.File(fp=image_io, filename=image_filename)
-
-    descriptionText = "Background removed!"
-
-    embed = nextcord.Embed(title="", description=descriptionText)
-    embed.set_image(url=f"attachment://{image_filename}")
-    await ctx.reply(file=file, embed=embed, mention_author=False)
+FRAME_TYPES = Union[VideoFrame, AnimatedFrame, ImageFrame]
+DATA_TYPES = Union[VideoData, AnimatedData, ImageFrame]
 
 
-def embed_iterator(
-    idx, total_idx, relay=False, relay_url=None, relay_error=None, initialization=False
-) -> Embed:
-    """Iterator for the relay channel."""
-    if initialization:
-        embed = nextcord.Embed(description="Initializing..")
+class BGRemoveBase:
+    def __init__(self, frame: Union[ImageFrame, VideoFrame, AnimatedFrame]):
+        self._frame = frame
 
-    else:
-        descriptionIterator = f"Processed {idx+1} out of {total_idx} frames."
-        descriptionRelayError = (
-            f"{descriptionIterator}\n\n" f"**Relay Channel Error:** {relay_error}"
+    def _retrieve_image(self):
+        if isinstance(self._frame, VideoFrame):
+            return self._video_frame(self._frame)
+
+        elif isinstance(self._frame, AnimatedFrame):
+            return self._animated_frame(self._frame)
+
+        return self._image_frame(self._frame)
+
+    def _insert_image(self, image: ImageType, frame: FRAME_TYPES):
+        if isinstance(frame, VideoFrame):
+            return self._ins_video_frame(image, frame)
+        elif isinstance(frame, AnimatedFrame):
+            return self._ins_animated_frame(image, frame)
+        return self._ins_image_frame(image, frame)
+
+    def _video_frame(self, video_frame: VideoFrame):
+        image = video_frame.image
+        return image
+
+    def _animated_frame(self, animated_frame: AnimatedFrame):
+        image = animated_frame.image
+        return image
+
+    def _image_frame(self, image_frame: ImageFrame):
+        image = image_frame.image
+        return image
+
+    def _ins_video_frame(self, image: ImageType, frame: VideoFrame) -> VideoFrame:
+        frame.image = image
+        return frame
+
+    def _ins_animated_frame(
+        self, image: ImageType, frame: AnimatedFrame
+    ) -> AnimatedFrame:
+        frame.image = image
+        return frame
+
+    def _ins_image_frame(self, image: ImageType, frame: ImageFrame) -> ImageFrame:
+        frame.image = image
+        return frame
+
+    def _image_conversion(self, image: Union[ImageType, bytes, ndarray]) -> ImageType:
+        if isinstance(image, ImageType):
+            return image
+        elif isinstance(image, bytes):
+            return Image.open(image)
+        return Image.fromarray(image)
+
+
+class BGRemove(BGRemoveBase):
+    def __init__(self, frame: FRAME_TYPES):
+        super().__init__(frame)
+        self.frame = frame
+
+    def remove_background(self) -> FRAME_TYPES:
+        image = self._retrieve_image()
+        rembg_out = remove(data=image)
+        rembg_image = self._image_conversion(rembg_out)
+        frame = self._insert_image(rembg_image, self.frame)
+        return frame
+
+
+class BGProcessBase:
+    def __init__(self, data: DATA_TYPES):
+        self._data = data
+        self._animated_io: BytesIO = BytesIO()
+        self._frames = self._retrieve_frames()
+
+    def _retrieve_frames(self):
+        if isinstance(self._data, VideoData):
+            return self._video_frames(self._data)
+
+        elif isinstance(self._data, AnimatedData):
+            return self._animated_frames(self._data)
+
+        return self._image_frames(self._data)
+
+    def _retrieve_image(self, frame: FRAME_TYPES):
+        if isinstance(frame, VideoFrame):
+            return self._video_image(frame)
+
+        elif isinstance(frame, AnimatedFrame):
+            return self._animated_image(frame)
+
+        return self._image(frame)
+
+    def _video_frames(self, data: VideoData):
+        return data.frames
+
+    def _animated_frames(self, data: AnimatedData):
+        return data.frames
+
+    def _image_frames(self, data: ImageFrame):
+        return [data]
+
+    def _video_image(self, video_frame: VideoFrame):
+        return video_frame.image
+
+    def _animated_image(self, animated_frame: AnimatedFrame):
+        return animated_frame.image
+
+    def _image(self, image_frame: ImageFrame):
+        return image_frame.image
+
+    def _pil_to_bytesio(self, image: ImageType):
+        image_io = BytesIO()
+        image.save(image_io, format="PNG")
+        image_io.seek(0)
+        return image_io
+
+    def _process_image(self, frame: FRAME_TYPES):
+        frame = BGRemove(frame).remove_background()
+        return frame
+
+    def _init_config(self):
+        relay_config = RelayConfig(init=True, image=None, idx=0, total_idx=0)
+        return relay_config
+
+    def _relay_config(self, image: BytesIO, idx: int, total_idx: int):
+        relay_config = RelayConfig(
+            init=False,
+            image=image,
+            idx=idx,
+            total_idx=total_idx,
         )
-
-        if relay and relay_error:
-            embed = nextcord.Embed(description=descriptionRelayError)
-
-        else:
-            embed = nextcord.Embed(description=descriptionIterator)
-            if relay:
-                embed.set_image(url=relay_url)
-
-    return embed
+        return relay_config
 
 
-async def get_channel(
-    ctx: Context, channel_id: Union[int, None]
-) -> Union[TextChannel, None]:
-    """Get a channel by ID."""
-    guild: Union[Guild, None] = ctx.guild
-    channel = None
-    if channel_id:
-        channel = guild.get_channel(channel_id) if guild else None
-        channel = channel if isinstance(channel, TextChannel) else None
-    return channel
+class BGProcess(BGProcessBase):
+    def __init__(self, ctx: Context, data: DATA_TYPES):
+        super().__init__(data)
+        self.ctx = ctx
 
+    async def process(self):
+        iterator = RelayIterator(self.ctx)
 
-async def relay_transmitter(
-    ctx: Context, Image_IO: BytesIO
-) -> tuple[Union[Message, None], Union[str, None], Union[str, None]]:
-    """Transmitter for the relay channel."""
-    relay_channel_id: Union[int, None] = bot_config.RELAY_CHANNEL_ID
-    relay_channel = await get_channel(ctx, relay_channel_id)
+        relay_config = self._init_config()
+        await iterator.send(relay_config)
 
-    relay_message: Union[Message, None] = None
-    relay_url: Union[str, None] = None
-    error: Union[str, None] = None
-    relay_file: nextcord.File = nextcord.File(
-        copy(Image_IO), filename="relay_image.png"
-    )
+        total_idx = len(self._frames)
 
-    if relay_channel:
-        try:
-            relay_message = await relay_channel.send(file=relay_file)
-            relay_url = str(relay_message.attachments[0]) if relay_message else None
+        for idx, frame in enumerate(self._frames):
+            bg_frame = self._process_image(frame)
+            bg_image = self._retrieve_image(bg_frame)
+            bg_image_io = self._pil_to_bytesio(bg_image)
 
-        except Forbidden:
-            error = "Missing Permissions to send messages to channel"
-
-    else:
-        error = "Invalid Channel ID or Missing Permissions to view it"
-
-    return relay_message, relay_url, error
-
-
-async def process_frames(ctx: Context, FramesDict):
-    """Process animated image or video frames."""
-    num_frames = len(FramesDict)
-    iterator_messsage = await ctx.channel.send(
-        embed=embed_iterator(0, 0, initialization=True)
-    )
-
-    previous_relay = None
-
-    for idx, data in FramesDict.items():
-        image_data = await remove_background(Image.open(data["image"]))
-        if isinstance(image_data, Image.Image):
-            data["image"] = image_data
-            if bot_config.RELAY_CHANNEL_ID:
-                relay_message, relay_url, error = await relay_transmitter(
-                    ctx, data["image"]
-                )
-
-                if relay_message and relay_url:
-                    if previous_relay:
-                        await previous_relay.delete()
-                    await iterator_messsage.edit(
-                        embed=embed_iterator(
-                            idx, num_frames, relay=True, relay_url=relay_url
-                        )
-                    )
-                    previous_relay = relay_message
-
-                else:
-                    await iterator_messsage.edit(
-                        embed=embed_iterator(
-                            idx, num_frames, relay=True, relay_error=error
-                        )
-                    )
-            else:
-                await iterator_messsage.edit(embed=embed_iterator(idx, num_frames))
-
-    rembg_GIF_IO = await reconstruct_gif(FramesDict)
-    await send_result_embed(ctx, rembg_GIF_IO, image_format="gif")
-
-    if previous_relay:
-        await previous_relay.delete()
-    await iterator_messsage.delete()
-
-
-async def reconstruct_gif(FramesDict) -> BytesIO:
-    """Reconstructs a gif from the frames in the dictionary."""
-    BackgroundDispose = ctypes.c_int(2)
-    Image_IO = BytesIO()
-
-    with ImageWand() as wand:
-        WandSequence: Sequence = wand.sequence
-        for idx, data in FramesDict.items():
-            with (
-                ImageWand(blob=data["image"]) as wand_image,
-                ImageWand(
-                    width=wand_image.width, height=wand_image.height, background=None
-                ) as wand_bg_composite,
-            ):
-
-                wand_bg_composite: ImageWand = wand_bg_composite.composite(
-                    wand_image, 0, 0
-                )
-                LibraryWand.MagickSetImageDispose(
-                    wand_bg_composite.wand, BackgroundDispose
-                )
-
-                WandSequence.append(wand_bg_composite)
-
-        for idx, data in FramesDict.items():
-            frame = WandSequence[idx]
-            if isinstance(frame, SingleImage):
-                frame.delay = int(data["duration"] / 10)
-
-        wand.type = "optimize"
-        wand.format = "GIF"
-        wand.save(file=Image_IO)
-
-    Image_IO.seek(0)
-    return Image_IO
-
-
-def pil_to_bytesio(image_pil: Image.Image, image_format: str) -> BytesIO:
-    """Converts a PIL image to a BytesIO buffer."""
-    image_io = BytesIO()
-    image_pil.save(image_io, format=image_format)
-    image_io.seek(0)
-    return image_io
-
-
-async def get_animated_frames(Image_IO) -> dict[int, dict[str, BytesIO]]:
-    """Creates a dictionary of frames from an animated image."""
-    image_frames = {
-        idx: {"image": pil_to_bytesio(frame, "PNG"), "duration": frame.info["duration"]}
-        for idx, frame in enumerate(ImageSequence.Iterator(Image_IO))
-    }
-    return image_frames
-
-
-async def remove_background(Image_PIL: Image.Image) -> Union[BytesIO, None]:
-    """Remove the background of an image."""
-    rembg_IO: Union[BytesIO, None] = None
-
-    rembg_PIL = remove(data=Image_PIL)
-    if isinstance(rembg_PIL, Image.Image):
-        rembg_IO = pil_to_bytesio(rembg_PIL, "PNG")
-    return rembg_IO
-
-
-async def get_num_frames(pil_image: Image.Image) -> int:
-    """Get the number of frames in the image."""
-    try:
-        num_frames = pil_image.n_frames
-    except Exception:
-        num_frames = 1
-
-    return num_frames
-
-
-async def get_max_pixels(num_frames: int) -> int:
-    """Determines the maximum number of pixels."""
-    if num_frames > 1:
-        max_px = rm_vars.max_px_animated
-    else:
-        max_px = rm_vars.max_px_image
-
-    return max_px
-
-
-async def get_video_details(bytes_file) -> Union[dict[str, int], None]:
-    """Creates a dict with the video details."""
-    video_details: Union[dict[str, int], None] = None
-
-    try:
-        av_container = av.open(copy(bytes_file), mode="r")
-        frame_count = len(
-            [packet for packet in av_container.demux(video=0) if packet.size > 0]
-        )
-        duration = av_container.duration / 1000000
-        fps = math.ceil(frame_count / duration)
-
-        av_container = av.open(copy(bytes_file), mode="r")
-        width, height = next(
-            (frame.width, frame.height)
-            for frame in av_container.decode(video=0)
-            if frame.width and frame.height
-        )
-        video_details = {
-            "frame_count": frame_count,
-            "fps": fps,
-            "width": width,
-            "height": height,
-            "duration": duration,
-        }
-
-    except Exception as e:
-        print(e)
-
-    return video_details
-
-
-async def get_video_frames(bytes_file) -> Union[dict[str, Union[BytesIO, int]], None]:
-    """Create a dictionary of frames from a video file."""
-    video_ImageFrames: Union[dict, None] = None
-    video_details = await get_video_details(bytes_file)
-
-    if video_details:
-        av_container = av.open(copy(bytes_file), mode="r")
-        max_fps = rm_vars.max_video_fps
-        fps_ratio = math.ceil(video_details["fps"] / max_fps)
-
-        adjusted_frame_count = math.ceil(video_details["frame_count"] / fps_ratio)
-        adjusted_fps = round(adjusted_frame_count / video_details["duration"], 2)
-        adjusted_frame_duration = (1 / adjusted_fps) * 1000
-
-        ratio_stepper = 0
-        idx_stepper = 0
-        video_ImageFrames = {}
-
-        for frame in av_container.decode(video=0):
-            if ratio_stepper == 0:
-                video_ImageFrames[idx_stepper] = {
-                    "image": pil_to_bytesio(frame.to_image(), "PNG"),
-                    "duration": adjusted_frame_duration,
-                }
-                idx_stepper += 1
-            ratio_stepper += 1
-            if ratio_stepper == fps_ratio:
-                ratio_stepper = 0
-    return video_ImageFrames
-
-
-async def get_adjusted_frame_data(
-    max_fps, video_fps, video_framecount, video_duration
-) -> tuple[int, int, int, float]:
-    """Adjusts the frame data to match the max_fps."""
-    fps_ratio = math.ceil(video_fps / max_fps)
-
-    adjusted_frame_count = math.ceil(video_framecount / fps_ratio)
-    adjusted_fps = int(round(adjusted_frame_count / video_duration, 2))
-    adjusted_frame_duration = (1 / adjusted_fps) * 1000
-
-    return fps_ratio, adjusted_fps, adjusted_frame_count, adjusted_frame_duration
-
-
-async def get_adjusted_frame_count(
-    max_fps, video_fps, video_framecount, video_duration
-) -> int:
-    """Returns the adjusted frame count for the video."""
-    _, _, adjusted_frame_count, _ = await get_adjusted_frame_data(
-        max_fps, video_fps, video_framecount, video_duration
-    )
-    return adjusted_frame_count
+            relay_config = self._relay_config(bg_image_io, idx, total_idx)
+            await iterator.send(relay_config)
+        await iterator.clean()
+        return self._data

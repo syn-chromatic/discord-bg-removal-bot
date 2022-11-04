@@ -1,133 +1,155 @@
-import requests
 from io import BytesIO
 from PIL import Image
-from typing import Union
-from nextcord import Embed
 
-from utils import rembg_utils
-from utils import general_utils as gen_utils
+from typing import Union
+
 from variables.command_variables import rembg_variables as rm_vars
 
+from utils.media_dataclasses import ResponseFile, ImageFrame, VideoData, AnimatedData
+from utils.media_utils import VideoDecompose, AnimatedDecompose
 
-async def download_image(
-    url,
-) -> tuple[Union[Image.Image, None], Union[int, None], Union[Embed, None]]:
-    """
-    Download an image from a URL and return the image as an Image object,
-    number of frames, and the error embed if there's an error.
-    """
-    PIL_Image: Union[Image.Image, None] = None
-    num_frames: Union[int, None] = None
-    error_embed: Union[Embed, None] = None
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 6.1; WOW64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/34.0.1847.137 Safari/537.36"
+class ImageError(Exception):
+    def __init__(self):
+        msg = "An error occurred while loading the image."
+        super().__init__(msg)
+
+
+class ImageDecompositionError(Exception):
+    def __init__(self):
+        msg = "An error occurred while decomposing the image."
+        super().__init__(msg)
+
+
+class VideoDecompositionError(Exception):
+    def __init__(self):
+        msg = "An error occurred while decomposing the video."
+        super().__init__(msg)
+
+
+class ExceedsMaxFrames(Exception):
+    def __init__(self, format, num_frames, max_frames):
+        msg = (
+            f"{format} exceeds maximum of {max_frames} frames.\n"
+            f"**Frame Count:** {num_frames}"
         )
-    }
+        super().__init__(msg)
 
-    response = requests.get(url, stream=True, headers=headers)
 
-    image_data = BytesIO(response.raw.read())
+class ExceedsMaxResolution(Exception):
+    def __init__(self, format, width, height, max_px):
+        msg = (
+            f"{format} needs to be <{max_px}px in width or height.\n"
+            f"**Resolution:** {width}x{height}"
+        )
+        super().__init__(msg)
 
-    try:
-        PIL_Image = Image.open(image_data)
-        width, height = PIL_Image.size
-        image_format = PIL_Image.format
 
-        max_num_frames = rm_vars.max_frames_animated
-        minimum_px = 32
+class SubceedsMinResolution(Exception):
+    def __init__(self, format, width, height, min_px):
+        msg = (
+            f"{format} needs to be >{min_px}px in width or height.\n"
+            f"**Resolution:** {width}x{height}"
+        )
+        super().__init__(msg)
 
-        num_frames = await rembg_utils.get_num_frames(PIL_Image)
-        max_px = await rembg_utils.get_max_pixels(num_frames)
 
-        if num_frames > max_num_frames:
-            error_embed = await gen_utils.construct_embed(
-                f"{image_format} exceeds maximum of {max_num_frames} frames.\n"
-                f"**Frame Count:** {num_frames}"
-            )
+class DownloadMedia:
+    def __init__(self, response_file: ResponseFile):
+        self.response_file = response_file
+        self.content = self.response_file.content
+        self.mime_type = self.response_file.mime_type
+
+    def get_num_frames(self, image_pil: Image.Image) -> int:
+        """Get the number of frames in the image."""
+        try:
+            num_frames = image_pil.n_frames
+        except Exception:
+            num_frames = 1
+        return num_frames
+
+    def get_max_pixels(self, num_frames: int) -> int:
+        """Determines the maximum number of pixels."""
+        if num_frames > 1:
+            max_px = rm_vars.max_px_animated
+        else:
+            max_px = rm_vars.max_px_image
+        return max_px
+
+    def open_image(self):
+        image_io = BytesIO(self.content)
+
+        try:
+            image_pil = Image.open(image_io)
+        except Exception:
+            raise ImageError()
+
+        return image_pil
+
+    def decompose_animated(self, image_pil: Image.Image):
+        try:
+            animated_data = AnimatedDecompose(image_pil).create_animated_data()
+        except Exception:
+            raise ImageDecompositionError()
+        return animated_data
+
+    def download_image(self) -> Union[ImageFrame, AnimatedData]:
+        image_pil = self.open_image()
+
+        width, height = image_pil.size
+        image_format = image_pil.format
+
+        max_frames = rm_vars.max_frames_animated
+        num_frames = self.get_num_frames(image_pil)
+
+        min_px = 32
+        max_px = self.get_max_pixels(num_frames)
+
+        if num_frames > max_frames:
+            raise ExceedsMaxFrames(image_format, num_frames, max_frames)
 
         elif width > max_px or height > max_px:
-            error_embed = await gen_utils.construct_embed(
-                f"{image_format} needs to be <{max_px}px in width or height.\n"
-                f"**Resolution:** {width}x{height}"
+            raise ExceedsMaxResolution(image_format, width, height, max_px)
+
+        elif width < min_px or height < min_px:
+            raise SubceedsMinResolution(image_format, width, height, min_px)
+
+        if num_frames == 1:
+            image_data = ImageFrame(
+                image=image_pil,
+                width=width,
+                height=height,
             )
+            return image_data
 
-        elif width < minimum_px or height < minimum_px:
-            error_embed = await gen_utils.construct_embed(
-                f"{image_format} needs to be >{minimum_px}px in width or height.\n"
-                f"**Resolution:** {width}x{height}"
-            )
+        return self.decompose_animated(image_pil)
 
-    except Exception as error:
-        print(error)
-        error_embed = await gen_utils.construct_embed(
-            "Error occurred while loading image!"
-        )
+    def decompose_video(self, video_io: BytesIO) -> VideoData:
+        try:
+            video_data = VideoDecompose(video_io).create_video_data()
+        except Exception:
+            raise VideoDecompositionError()
+        return video_data
 
-    return PIL_Image, num_frames, error_embed
+    def download_video(self) -> VideoData:
+        video_io = BytesIO(self.content)
+        video_data = self.decompose_video(video_io)
 
+        width, height = video_data.width, video_data.height
 
-async def download_video(url):
-    """
-    Downloads a video from a given URL. Returns the video as a BytesIO object,
-    and the error embed if there was an error.
-    """
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 6.1; WOW64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/34.0.1847.137 Safari/537.36"
-        )
-    }
+        max_frames = rm_vars.max_frames_animated
+        num_frames = video_data.framecount
 
-    response = requests.get(url, stream=True, headers=headers)
-    video_data: BytesIO = BytesIO(response.raw.read())
-    video_details = await rembg_utils.get_video_details(video_data)
-    error_embed: Union[Embed, None] = None
+        min_px = 32
+        max_px = self.get_max_pixels(num_frames)
 
-    try:
-        if video_details:
-            width, height = video_details["width"], video_details["height"]
-            fps = video_details["fps"]
-            frame_count = video_details["frame_count"]
-            duration = video_details["duration"]
-            max_fps = rm_vars.max_video_fps
-            max_num_frames = rm_vars.max_frames_animated
-            max_px = rm_vars.max_px_animated
-            minimum_px = 32
+        if num_frames > max_frames:
+            raise ExceedsMaxFrames(self.mime_type, num_frames, max_frames)
 
-            if fps > max_fps:
-                adjusted_framecount = await rembg_utils.get_adjusted_frame_count(
-                    max_fps, fps, frame_count, duration
-                )
-            else:
-                adjusted_framecount = frame_count
+        elif width > max_px or height > max_px:
+            raise ExceedsMaxResolution(self.mime_type, width, height, max_px)
 
-            if adjusted_framecount > max_num_frames:
-                error_embed = await gen_utils.construct_embed(
-                    f"Video exceeds maximum of {max_num_frames} frames.\n"
-                    f"**Frame Count:** {frame_count}"
-                )
+        elif width < min_px or height < min_px:
+            raise SubceedsMinResolution(self.mime_type, width, height, min_px)
 
-            elif width > max_px or height > max_px:
-                error_embed = await gen_utils.construct_embed(
-                    f"Video needs to be <{max_px}px in width or height.\n"
-                    f"**Resolution:** {width}x{height}"
-                )
-
-            elif width < minimum_px or height < minimum_px:
-                error_embed = await gen_utils.construct_embed(
-                    f"Video needs to be >{minimum_px}px in width or height.\n"
-                    f"**Resolution:** {width}x{height}"
-                )
-
-    except Exception as error:
-        print(error)
-        error_embed = await gen_utils.construct_embed(
-            "Error occured while loading video!"
-        )
-
-    return video_data, error_embed
+        return video_data

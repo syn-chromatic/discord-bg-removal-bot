@@ -1,12 +1,3 @@
-import sys
-from variables import bot_config
-from bot_instance import BOT
-
-# Initialization
-import inits  # noqa
-import events # noqa
-
-
 def report_error(error):
     input(error)
     sys.exit()
@@ -36,10 +27,21 @@ def run_bot():
         )
 
     try:
-        BOT.run(bot_token)
+        bot.run(bot_token)
     except Exception as error:
         report_error(error)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    import sys
+    import bot_instance
+
+    from variables import bot_config
+
+    import inits
+    import events
+
+    __all__ = ["inits", "events"]
+
+    bot = bot_instance.BOT
     run_bot()
