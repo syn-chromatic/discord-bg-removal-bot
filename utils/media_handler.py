@@ -33,6 +33,17 @@ class MediaHandlerBase:
             raise error
         return response_file
 
+    def _retrieve_data(self):
+        image_mime_types = ExtensionConfig().image_mime_types
+        video_mime_types = ExtensionConfig().video_mime_types
+        mime_type = self._response_file.mime_type
+
+        if mime_type in image_mime_types:
+            return self._get_image_data()
+
+        elif mime_type in video_mime_types:
+            return self._get_video_data()
+
     def _get_image_data(self) -> Union[ImageFrame, AnimatedData]:
         try:
             data = DownloadMedia(self._response_file).download_image()
@@ -52,6 +63,11 @@ class MediaHandlerBase:
         uuid_name = uuid4().hex[:10]
         return uuid_name
 
+    def _create_file(self, output: BytesIO, ext: str):
+        filename = self._filename() + f".{ext}"
+        nextcord_file = nextcord.File(fp=output, filename=filename)
+        return nextcord_file
+
     async def _reply_error(self, message: str):
         error_embed = ConstructEmbed().message(message)
         error_embed = error_embed.is_error().get_embed()
@@ -67,39 +83,24 @@ class MediaHandler(MediaHandlerBase):
     async def handler(self) -> Union[nextcord.File, None]:
         """Handle the type of media and removes the background."""
 
-        image_mime_types = ExtensionConfig().image_mime_types
-        video_mime_types = ExtensionConfig().video_mime_types
+        data = self._retrieve_data()
 
-        mime_type = self._response_file.mime_type
-
-        if mime_type in image_mime_types:
-            data = self._get_image_data()
+        if data:
             data_out = await BGProcess(self._ctx, data).process()
-            if isinstance(data_out, AnimatedData):
-                out_io = ComposeGIF(data_out).reconstruct()
-                nextcord_file = nextcord.File(
-                    fp=out_io,
-                    filename=f"{self._filename()}.gif"
-                )
-                return nextcord_file
 
             if isinstance(data_out, ImageFrame):
                 out_io = BytesIO()
                 data_out.image.save(out_io, "PNG")
                 out_io.seek(0)
-                nextcord_file = nextcord.File(
-                    fp=out_io,
-                    filename=f"{self._filename()}.png"
-                )
+                nextcord_file = self._create_file(out_io, "png")
                 return nextcord_file
 
-        elif mime_type in video_mime_types:
-            data = self._get_video_data()
-            data_out = await BGProcess(self._ctx, data).process()
+            if isinstance(data_out, AnimatedData):
+                out_io = ComposeGIF(data_out).reconstruct()
+                nextcord_file = self._create_file(out_io, "gif")
+                return nextcord_file
+
             if isinstance(data_out, VideoData):
                 out_io = ComposeGIF(data_out).reconstruct()
-                nextcord_file = nextcord.File(
-                    fp=out_io,
-                    filename=f"{self._filename()}.gif"
-                )
+                nextcord_file = self._create_file(out_io, "gif")
                 return nextcord_file
