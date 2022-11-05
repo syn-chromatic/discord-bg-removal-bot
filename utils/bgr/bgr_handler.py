@@ -1,9 +1,10 @@
 import nextcord
+import asyncio
+
 from nextcord.ext.commands import Context
 from utils.bgr.bgr_download import DownloadMedia
 
 from utils.bgr.bgr_mime import MimeTypeSniff
-from utils.bgr.bgr_embeds import ConstructEmbed
 
 from io import BytesIO
 from typing import Union
@@ -24,7 +25,6 @@ class MediaHandlerBase:
     def __init__(self, ctx: Context, url: str):
         self._ctx = ctx
         self._url = url
-        self._response_file = self._get_response_file()
 
     def _get_response_file(self) -> ResponseFile:
         try:
@@ -33,27 +33,34 @@ class MediaHandlerBase:
             raise error
         return response_file
 
-    def _retrieve_data(self):
+    def _retrieve_data(self, rsp_file: ResponseFile):
         image_mime_types = MimeTypeConfig().image_mime_types
         video_mime_types = MimeTypeConfig().video_mime_types
-        mime_type = self._response_file.mime_type
+        mime_type = rsp_file.mime_type
 
         if mime_type in image_mime_types:
-            return self._get_image_data()
+            return self._get_image_data(rsp_file)
 
         if mime_type in video_mime_types:
-            return self._get_video_data()
+            return self._get_video_data(rsp_file)
 
-    def _get_image_data(self) -> Union[ImageFrame, AnimatedData]:
+    def _create_file(self, output: BytesIO, ext: str):
+        filename = self._filename() + f".{ext}"
+        nextcord_file = nextcord.File(fp=output, filename=filename)
+        return nextcord_file
+
+    @staticmethod
+    def _get_image_data(rsp_file: ResponseFile) -> Union[ImageFrame, AnimatedData]:
         try:
-            data = DownloadMedia(self._response_file).download_image()
+            data = DownloadMedia(rsp_file).download_image()
         except Exception as error:
             raise error
         return data
 
-    def _get_video_data(self) -> VideoData:
+    @staticmethod
+    def _get_video_data(rsp_file: ResponseFile) -> VideoData:
         try:
-            data = DownloadMedia(self._response_file).download_video()
+            data = DownloadMedia(rsp_file).download_video()
         except Exception as error:
             raise error
         return data
@@ -63,23 +70,14 @@ class MediaHandlerBase:
         uuid_name = uuid4().hex[:10]
         return uuid_name
 
-    def _create_file(self, output: BytesIO, ext: str):
-        filename = self._filename() + f".{ext}"
-        nextcord_file = nextcord.File(fp=output, filename=filename)
-        return nextcord_file
-
-    async def _reply_error(self, message: str):
-        error_embed = ConstructEmbed().message(message)
-        error_embed = error_embed.is_error().get_embed()
-        await self._ctx.reply(embed=error_embed)
-
 
 class MediaHandler(MediaHandlerBase):
     """MediaHandler class which handles different types of media files for rembg."""
 
     async def handler(self) -> Union[nextcord.File, None]:
         """Handle the type of media and removes the background."""
-        data = self._retrieve_data()
+        rsp_file = await asyncio.to_thread(self._get_response_file)
+        data = await asyncio.to_thread(self._retrieve_data, rsp_file)
 
         if data:
             data_out = await BGProcess(self._ctx, data).process()
