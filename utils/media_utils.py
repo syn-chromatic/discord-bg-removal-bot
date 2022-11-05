@@ -416,34 +416,34 @@ class DisposeDuplicateBase:
             image, duration = self._retrieve_frame_and_duration(frame)
             width, height = self._retrieve_resolution(frame)
 
-            if previous_frame:
-                prev_image, _ = self._retrieve_frame_and_duration(previous_frame)
-                prev_width, prev_height = self._retrieve_resolution(previous_frame)
-
-                if width == prev_width and height == prev_height:
-                    mse_error = self.mse(image, prev_image)
-
-                    if mse_error < mse_strength:
-                        duplicate_duration += duration
-                        duplicate_idx.append(idx)
-                        self._insert_new_duration(previous_frame, duplicate_duration)
-                        continue
-
-                shift = 0
-
-                for idx2 in duplicate_idx:
-                    idx2 -= shift
-                    self._remove_frame(idx2)
-                    shift += 1
-
-                previous_frame = None
-                duplicate_idx = []
-                duplicate_duration = Fraction(0)
-                duplicate_duration += duration
-
             if not previous_frame:
                 previous_frame = frame
                 duplicate_duration += duration
+                continue
+
+            prev_image, _ = self._retrieve_frame_and_duration(previous_frame)
+            prev_width, prev_height = self._retrieve_resolution(previous_frame)
+
+            if width == prev_width and height == prev_height:
+                mse_error = self.mse(image, prev_image)
+
+                if mse_error < mse_strength:
+                    duplicate_duration += duration
+                    duplicate_idx.append(idx)
+                    self._insert_new_duration(previous_frame, duplicate_duration)
+                    continue
+
+            shift = 0
+
+            for idx2 in duplicate_idx:
+                idx2 -= shift
+                self._remove_frame(idx2)
+                shift += 1
+
+            previous_frame = None
+            duplicate_idx = []
+            duplicate_duration = Fraction(0)
+            duplicate_duration += duration
 
 
 class DisposeDuplicateFrames(DisposeDuplicateBase):
