@@ -53,7 +53,7 @@ Before running the bot you must configure the necessary variables in `/variables
 - RELAY_CHANNEL_ID — For sending images to a different channel from where the command is used then retrieving the image url and inserting it into an embed for previewing of processed images
 
 ## Optional Command Configuration
-You can find the variables in `/variables/command_variables/rembg_variables.py`
+You can find the variables in `/variables/command_variables/bgr_variables.py`
 ### Rembg Command Variables
 - max_frames — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
 - max_px_image — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height

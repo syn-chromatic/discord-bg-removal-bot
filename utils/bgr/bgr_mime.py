@@ -2,7 +2,7 @@ import requests
 import sniffpy
 
 from sniffpy.mimetype import parse_mime_type
-from utils.media_dataclasses import MimeTypeConfig, ResponseFile
+from utils.bgr.bgr_dataclasses import MimeTypeConfig, ResponseFile
 
 
 class ConnectionError(Exception):

@@ -1,11 +1,13 @@
-from bot_instance import BOT
+import bot_instance
 from nextcord.ext.commands import Context
 
-from utils.embed_utils import ConstructEmbed
-from utils.media_handler import MediaHandler
+from utils.bgr.bgr_embeds import ConstructEmbed
+from utils.bgr.bgr_handler import MediaHandler
+
+bot = bot_instance.BOT
 
 
-@BOT.command(description="")
+@bot.command(description="")
 async def rembg(ctx: Context):
     """Command to remove the background of images or videos."""
     if not ctx.message.attachments:

@@ -1,17 +1,17 @@
 import nextcord
 from nextcord.ext.commands import Context
-from utils.download_utils import DownloadMedia
+from utils.bgr.bgr_download import DownloadMedia
 
-from utils.mime_utils import MimeTypeSniff
-from utils.embed_utils import ConstructEmbed
+from utils.bgr.bgr_mime import MimeTypeSniff
+from utils.bgr.bgr_embeds import ConstructEmbed
 
 from io import BytesIO
 from typing import Union
 from uuid import uuid4
 
-from utils.rembg_utils import BGProcess
-from utils.media_utils import ComposeGIF
-from utils.media_dataclasses import (
+from utils.bgr.bgr_utils import BGProcess
+from utils.bgr.bgr_media import ComposeGIF
+from utils.bgr.bgr_dataclasses import (
     MimeTypeConfig,
     ResponseFile,
     ImageFrame,

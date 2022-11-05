@@ -1,3 +1,3 @@
-from bot_commands import rembg_command
+from commands.bgr_bgremoval import bgr_commands
 
-__all__ = ["rembg_command"]
+__all__ = ["bgr_commands"]

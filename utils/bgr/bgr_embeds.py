@@ -8,7 +8,7 @@ from io import BytesIO
 from typing import Union
 
 from variables import bot_config
-from utils.media_dataclasses import RelayMessage, RelayConfig
+from utils.bgr.bgr_dataclasses import RelayMessage, RelayConfig
 
 
 class ConstructEmbed():

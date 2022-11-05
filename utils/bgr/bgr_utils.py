@@ -8,8 +8,8 @@ from PIL import Image
 from PIL.Image import Image as ImageType
 from numpy import ndarray
 
-from utils.embed_utils import RelayIterator
-from utils.media_dataclasses import (
+from utils.bgr.bgr_embeds import RelayIterator
+from utils.bgr.bgr_dataclasses import (
     VideoFrame,
     AnimatedFrame,
     VideoData,

@@ -3,10 +3,20 @@ from PIL import Image
 
 from typing import Union
 
-from variables.command_variables import rembg_variables as rm_vars
+from variables.command_variables import bgr_variables as bgr_vars
 
-from utils.media_dataclasses import ResponseFile, ImageFrame, VideoData, AnimatedData
-from utils.media_utils import VideoDecompose, AnimatedDecompose, DisposeDuplicateFrames
+from utils.bgr.bgr_dataclasses import (
+    ResponseFile,
+    ImageFrame,
+    VideoData,
+    AnimatedData,
+)
+
+from utils.bgr.bgr_media import (
+    VideoDecompose,
+    AnimatedDecompose,
+    DisposeDuplicateFrames,
+)
 
 
 class ImageError(Exception):
@@ -73,9 +83,9 @@ class DownloadMedia:
     def get_max_pixels(num_frames: int) -> int:
         """Determines the maximum number of pixels."""
         if num_frames > 1:
-            max_px = rm_vars.max_px_animated
+            max_px = bgr_vars.max_px_animated
         else:
-            max_px = rm_vars.max_px_image
+            max_px = bgr_vars.max_px_image
         return max_px
 
     def open_image(self):
@@ -103,7 +113,7 @@ class DownloadMedia:
         width, height = image_pil.size
         image_format = str(image_pil.format)
 
-        max_frames = rm_vars.max_frames
+        max_frames = bgr_vars.max_frames
         num_frames = self.get_num_frames(image_pil)
 
         min_px = 32
@@ -144,7 +154,7 @@ class DownloadMedia:
 
         width, height = video_data.width, video_data.height
 
-        max_frames = rm_vars.max_frames
+        max_frames = bgr_vars.max_frames
         num_frames = video_data.framecount
 
         min_px = 32
