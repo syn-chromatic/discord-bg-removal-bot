@@ -95,12 +95,7 @@ class MediaHandler(MediaHandlerBase):
                 nextcord_file = self._create_file(out_io, "png")
                 return nextcord_file
 
-            if isinstance(data_out, AnimatedData):
-                out_io = ComposeGIF(data_out).reconstruct()
-                nextcord_file = self._create_file(out_io, "gif")
-                return nextcord_file
-
-            if isinstance(data_out, VideoData):
+            if isinstance(data_out, (VideoData, AnimatedData)):
                 out_io = ComposeGIF(data_out).reconstruct()
                 nextcord_file = self._create_file(out_io, "gif")
                 return nextcord_file
