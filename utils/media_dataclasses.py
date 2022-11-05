@@ -68,15 +68,9 @@ class RelayConfig:
 
 
 @dataclass
-class ExtensionConfig:
-    """File Type Extension Configuration"""
-
-    file_extensions: list[str] = field(
-        default_factory=lambda: ["png", "jpg", "jpeg", "gif", "webp", "mp4"]
-    )
-
+class MimeTypeConfig:
     image_mime_types: list[str] = field(
         default_factory=lambda: ["png", "jpeg", "gif", "webp"]
     )
-
     video_mime_types: list[str] = field(default_factory=lambda: ["mp4"])
+    mime_types: list[str] = image_mime_types + video_mime_types

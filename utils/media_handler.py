@@ -12,7 +12,7 @@ from uuid import uuid4
 from utils.rembg_utils import BGProcess
 from utils.media_utils import ComposeGIF
 from utils.media_dataclasses import (
-    ExtensionConfig,
+    MimeTypeConfig,
     ResponseFile,
     ImageFrame,
     VideoData,
@@ -34,8 +34,8 @@ class MediaHandlerBase:
         return response_file
 
     def _retrieve_data(self):
-        image_mime_types = ExtensionConfig().image_mime_types
-        video_mime_types = ExtensionConfig().video_mime_types
+        image_mime_types = MimeTypeConfig().image_mime_types
+        video_mime_types = MimeTypeConfig().video_mime_types
         mime_type = self._response_file.mime_type
 
         if mime_type in image_mime_types:
