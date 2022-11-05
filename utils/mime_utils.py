@@ -59,7 +59,7 @@ class MimeTypeSniff:
         mime_type = parse_mime.subtype
 
         if mime_type in self.valid_mime_types:
-            content = self.response.content
+            content = content_chunk + self.response.content
             response_file = ResponseFile(
                 content=content,
                 mime_type=mime_type,

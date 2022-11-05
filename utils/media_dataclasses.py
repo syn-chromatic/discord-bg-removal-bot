@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import Union
 from PIL.Image import Image as ImageType
 from fractions import Fraction
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from nextcord import Message
 
 
@@ -69,8 +69,7 @@ class RelayConfig:
 
 @dataclass
 class MimeTypeConfig:
-    image_mime_types: list[str] = field(
-        default_factory=lambda: ["png", "jpeg", "gif", "webp"]
-    )
-    video_mime_types: list[str] = field(default_factory=lambda: ["mp4"])
-    mime_types: list[str] = image_mime_types + video_mime_types
+    def __init__(self):
+        self.image_mime_types: list[str] = ["png", "jpeg", "gif", "webp"]
+        self.video_mime_types: list[str] = ["mp4"]
+        self.mime_types = self.image_mime_types + self.video_mime_types
