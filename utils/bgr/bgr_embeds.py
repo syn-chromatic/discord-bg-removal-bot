@@ -134,9 +134,6 @@ class IteratorBase:
 
 
 class RelayIterator(IteratorBase):
-    def __init__(self, ctx: Context):
-        super().__init__(ctx)
-
     async def send(self, relay_config: RelayConfig):
         relay = await self._get_relay(relay_config)
         embed = self._create_embed(relay_config, relay)

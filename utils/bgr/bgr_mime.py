@@ -5,7 +5,7 @@ from sniffpy.mimetype import parse_mime_type
 from utils.bgr.bgr_dataclasses import MimeTypeConfig, ResponseFile
 
 
-class ConnectionError(Exception):
+class MimeConnectionError(Exception):
     def __init__(self):
         super().__init__("Connection error occurred.")
 
@@ -40,7 +40,7 @@ class MimeTypeSniff(MimeTypeConfig):
                 timeout=10
             )
         except Exception:
-            raise ConnectionError()
+            raise MimeConnectionError()
 
         return response
 

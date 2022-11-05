@@ -64,9 +64,9 @@ class VideoDecomposeBase:
         return frame_duration
 
     @staticmethod
-    def _pil_to_bytesio(image: Image.Image, format: str) -> BytesIO:
+    def _pil_to_bytesio(image: Image.Image, fp_format: str) -> BytesIO:
         image_io = BytesIO()
-        image.save(image_io, format=format)
+        image.save(image_io, format=fp_format)
         image_io.seek(0)
         return image_io
 
@@ -108,9 +108,6 @@ class VideoDecomposeBase:
 
 
 class VideoDecompose(VideoDecomposeBase):
-    def __init__(self, video_io: BytesIO):
-        super().__init__(video_io)
-
     def create_video_data(self) -> VideoData:
         width, height = self._get_resolution()
         frames, framecount, total_duration = self._create_frame_data()
@@ -168,9 +165,9 @@ class AnimatedDecomposeBase:
         return frame_duration
 
     @staticmethod
-    def _pil_to_bytesio(image: Image.Image, format: str) -> BytesIO:
+    def _pil_to_bytesio(image: Image.Image, fp_format: str) -> BytesIO:
         image_io = BytesIO()
-        image.save(image_io, format=format)
+        image.save(image_io, format=fp_format)
         image_io.seek(0)
         return image_io
 
@@ -212,9 +209,6 @@ class AnimatedDecomposeBase:
 
 
 class AnimatedDecompose(AnimatedDecomposeBase):
-    def __init__(self, image: Image.Image):
-        super().__init__(image)
-
     def create_animated_data(self) -> AnimatedData:
         frames, framecount, total_duration = self._create_frame_data()
 
@@ -273,17 +267,14 @@ class ComposeGIFBase:
         return image, duration
 
     @staticmethod
-    def _pil_to_bytesio(image: Image.Image, format: str) -> BytesIO:
+    def _pil_to_bytesio(image: Image.Image, fp_format: str) -> BytesIO:
         image_io = BytesIO()
-        image.save(image_io, format=format)
+        image.save(image_io, format=fp_format)
         image_io.seek(0)
         return image_io
 
 
 class ComposeGIF(ComposeGIFBase):
-    def __init__(self, data: Union[VideoData, AnimatedData]):
-        super().__init__(data)
-
     def reconstruct(self) -> BytesIO:
         with ImageWand() as wand:
             WandSequence: Sequence = wand.sequence
@@ -340,7 +331,7 @@ class DisposeDuplicateBase:
             self._remove_video_frame(idx, self._data)
 
         elif isinstance(self._data, AnimatedData):
-            return self._remove_animated_frame(idx, self._data)
+            self._remove_animated_frame(idx, self._data)
 
     @staticmethod
     def _remove_video_frame(idx: int, data: VideoData):

@@ -41,7 +41,7 @@ class MediaHandlerBase:
         if mime_type in image_mime_types:
             return self._get_image_data()
 
-        elif mime_type in video_mime_types:
+        if mime_type in video_mime_types:
             return self._get_video_data()
 
     def _get_image_data(self) -> Union[ImageFrame, AnimatedData]:
@@ -76,9 +76,6 @@ class MediaHandlerBase:
 
 class MediaHandler(MediaHandlerBase):
     """MediaHandler class which handles different types of media files for rembg."""
-
-    def __init__(self, ctx: Context, url: str):
-        super().__init__(ctx, url)
 
     async def handler(self) -> Union[nextcord.File, None]:
         """Handle the type of media and removes the background."""

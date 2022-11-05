@@ -38,27 +38,27 @@ class VideoDecompositionError(Exception):
 
 
 class ExceedsMaxFrames(Exception):
-    def __init__(self, format: str, num_frames: int, max_frames: int):
+    def __init__(self, fp_format: str, num_frames: int, max_frames: int):
         msg = (
-            f"{format} exceeds maximum of {max_frames} frames.\n"
+            f"{fp_format} exceeds maximum of {max_frames} frames.\n"
             f"Frame Count: {num_frames}"
         )
         super().__init__(msg)
 
 
 class ExceedsMaxResolution(Exception):
-    def __init__(self, format: str, width: int, height: int, max_px: int):
+    def __init__(self, fp_format: str, width: int, height: int, max_px: int):
         msg = (
-            f"{format.upper()} needs to be <{max_px}px in width or height.\n"
+            f"{fp_format.upper()} needs to be <{max_px}px in width or height.\n"
             f"Resolution: {width}x{height}"
         )
         super().__init__(msg)
 
 
 class SubceedsMinResolution(Exception):
-    def __init__(self, format: str, width: int, height: int, min_px: int):
+    def __init__(self, fp_format: str, width: int, height: int, min_px: int):
         msg = (
-            f"{format.upper()} needs to be >{min_px}px in width or height.\n"
+            f"{fp_format.upper()} needs to be >{min_px}px in width or height.\n"
             f"Resolution: {width}x{height}"
         )
         super().__init__(msg)
@@ -123,10 +123,10 @@ class DownloadMedia:
         if (num_frames / 2) > max_frames:
             raise ExceedsMaxFrames(image_format, num_frames, max_frames)
 
-        elif width > max_px or height > max_px:
+        if width > max_px or height > max_px:
             raise ExceedsMaxResolution(image_format, width, height, max_px)
 
-        elif width < min_px or height < min_px:
+        if width < min_px or height < min_px:
             raise SubceedsMinResolution(image_format, width, height, min_px)
 
         if num_frames == 1:
@@ -163,10 +163,10 @@ class DownloadMedia:
         if num_frames > max_frames:
             raise ExceedsMaxFrames(self.mime_type, num_frames, max_frames)
 
-        elif width > max_px or height > max_px:
+        if width > max_px or height > max_px:
             raise ExceedsMaxResolution(self.mime_type, width, height, max_px)
 
-        elif width < min_px or height < min_px:
+        if width < min_px or height < min_px:
             raise SubceedsMinResolution(self.mime_type, width, height, min_px)
 
         return video_data
