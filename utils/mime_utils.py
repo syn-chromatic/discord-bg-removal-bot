@@ -16,10 +16,10 @@ class UnsupportedFileType(Exception):
         super().__init__(msg)
 
 
-class MimeTypeSniff:
-    def __init__(self, url):
+class MimeTypeSniff(MimeTypeConfig):
+    def __init__(self, url) -> None:
+        super().__init__()
         self.url = url
-        self.valid_mime_types = self.get_valid_mime_types()
         self.response = self.get_response()
 
     @staticmethod
@@ -34,20 +34,15 @@ class MimeTypeSniff:
     def get_response(self) -> requests.Response:
         try:
             response = requests.get(
-                self.url, stream=True, headers=self._headers(), timeout=10
+                self.url,
+                stream=True,
+                headers=self._headers(),
+                timeout=10
             )
-        except requests.exceptions.ConnectionError:
+        except Exception:
             raise ConnectionError()
 
         return response
-
-    @staticmethod
-    def get_valid_mime_types():
-        valid_types = [
-            *MimeTypeConfig().image_mime_types,
-            *MimeTypeConfig().video_mime_types,
-        ]
-        return valid_types
 
     def get_mime_type(self) -> ResponseFile:
         content_iter = self.response.iter_content(2048)
@@ -58,7 +53,7 @@ class MimeTypeSniff:
         parse_mime = parse_mime_type(sniff_type)
         mime_type = parse_mime.subtype
 
-        if mime_type in self.valid_mime_types:
+        if mime_type in self.mime_types:
             content = content_chunk + self.response.content
             response_file = ResponseFile(
                 content=content,
