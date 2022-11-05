@@ -202,5 +202,4 @@ class BGProcess(BGProcessBase):
                 await iterator.send(relay_config)
 
         await iterator.clean()
-        print(self._data)
         return self._data
