@@ -5,7 +5,7 @@
 #### With CPU processing it took around 2 minutes for this particular video
 *(482x640 - x37 frames)*
 
-![](https://github.com/Syn-dromatic/discord-bg-removal-bot/blob/main/preview.gif)
+![](https://github.com/Syn-dromatic/discord-bg-removal-bot/blob/main/preview/preview.gif)
 
 
 # Prerequisites 
