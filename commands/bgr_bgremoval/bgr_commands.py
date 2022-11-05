@@ -3,9 +3,7 @@ from nextcord.ext.commands import Context
 
 from utils.bgr.bgr_embeds import ConstructEmbed
 from utils.bgr.bgr_handler import MediaHandler
-
 from utils.bgr.bgr_exceptions import BGR_EXCEPTIONS
-
 
 bot = bot_instance.BOT
 

@@ -8,7 +8,6 @@ from typing import Union
 from PIL import Image
 from PIL.Image import Image as ImageType
 from numpy import ndarray
-from concurrent.futures import ProcessPoolExecutor
 
 from utils.bgr.bgr_embeds import RelayIterator
 from utils.bgr.bgr_dataclasses import (
@@ -149,24 +148,12 @@ class BGProcessBase:
     def _image(image_frame: ImageFrame):
         return image_frame.image
 
-    async def _async_pil_bytesio(self, image: ImageType):
-        loop = asyncio.get_running_loop()
-        executor = ProcessPoolExecutor(max_workers=1)
-        result = await loop.run_in_executor(executor, self._pil_to_bytesio, image)
-        return result
-
     @staticmethod
     def _pil_to_bytesio(image: ImageType):
         image_io = BytesIO()
         image.save(image_io, format="PNG")
         image_io.seek(0)
         return image_io
-
-    async def _async_process_image(self, frame: FRAME_TYPES):
-        loop = asyncio.get_running_loop()
-        executor = ProcessPoolExecutor(max_workers=1)
-        result = await loop.run_in_executor(executor, self._process_image, frame)
-        return result
 
     @staticmethod
     def _process_image(frame: FRAME_TYPES):
@@ -206,13 +193,14 @@ class BGProcess(BGProcessBase):
                 relay_config = self._relay_config(None, 0, total_idx)
                 await iterator.send(relay_config)
 
-            bg_frame = await self._async_process_image(frame)
+            bg_frame = await asyncio.to_thread(self._process_image, frame)
             bg_image = self._retrieve_image(bg_frame)
-            bg_image_io = await self._async_pil_bytesio(bg_image)
+            bg_image_io = await asyncio.to_thread(self._pil_to_bytesio, bg_image)
 
             if idx + 1 != total_idx:
                 relay_config = self._relay_config(bg_image_io, idx + 1, total_idx)
                 await iterator.send(relay_config)
 
         await iterator.clean()
+        print(self._data)
         return self._data

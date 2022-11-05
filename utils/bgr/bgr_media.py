@@ -25,6 +25,8 @@ from utils.bgr.bgr_dataclasses import (
     AnimatedFrame,
 )
 
+FRAMES_TYPES = Union[list[VideoFrame], list[AnimatedFrame]]
+
 
 class VideoDecomposeBase:
     def __init__(self, video_io: BytesIO):
@@ -394,11 +396,14 @@ class DisposeDuplicateBase:
         mse_error = np.divide(image_sum, (nd_a.shape[0] * nd_b.shape[1]))
         return mse_error
 
-    def _dispose(
-        self,
-        frames: Union[list[VideoFrame], list[AnimatedFrame]],
-        mse_strength: float = 0.05,
-    ):
+    def _dispose_duplicates(self, duplicate_idx: list[int]):
+        shift = 0
+        for idx in duplicate_idx:
+            idx -= shift
+            self._remove_frame(idx)
+            shift += 1
+
+    def _dispose(self, frames: FRAMES_TYPES, mse_strength):
         previous_frame = None
         duplicate_idx = []
         duplicate_duration = Fraction(0)
@@ -424,27 +429,24 @@ class DisposeDuplicateBase:
                     self._insert_new_duration(previous_frame, duplicate_duration)
                     continue
 
-            shift = 0
-
-            for idx2 in duplicate_idx:
-                idx2 -= shift
-                self._remove_frame(idx2)
-                shift += 1
+            self._dispose_duplicates(duplicate_idx)
 
             previous_frame = None
             duplicate_idx = []
             duplicate_duration = Fraction(0)
             duplicate_duration += duration
 
+        self._dispose_duplicates(duplicate_idx)
+
 
 class DisposeDuplicateFrames(DisposeDuplicateBase):
-    def dispose_animated(self, data: AnimatedData, mse_strength: float = 0.05):
+    def dispose_animated(self, data: AnimatedData, mse_strength: float = 0.03):
         super().__post_init__(data)
         animated_frames = self._animated_frames(data)
         self._dispose(animated_frames, mse_strength)
         return data
 
-    def dispose_video(self, data: VideoData, mse_strength: float = 0.05):
+    def dispose_video(self, data: VideoData, mse_strength: float = 0.03):
         super().__post_init__(data)
         animated_frames = self._video_frames(data)
         self._dispose(animated_frames, mse_strength)
