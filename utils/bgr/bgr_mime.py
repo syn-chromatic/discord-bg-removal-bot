@@ -2,18 +2,16 @@ import requests
 import sniffpy
 
 from sniffpy.mimetype import parse_mime_type
-from utils.bgr.bgr_dataclasses import MimeTypeConfig, ResponseFile
 
+from utils.bgr.bgr_dataclasses import (
+    MimeTypeConfig,
+    ResponseFile,
+)
 
-class MimeConnectionError(Exception):
-    def __init__(self):
-        super().__init__("Connection error occurred.")
-
-
-class UnsupportedFileType(Exception):
-    def __init__(self, mime_type: str):
-        msg = "Detected file mime type as: " f"'{mime_type}', which is not supported."
-        super().__init__(msg)
+from utils.bgr.bgr_exceptions import (
+    MimeConnectionError,
+    UnsupportedFileType,
+)
 
 
 class MimeTypeSniff(MimeTypeConfig):

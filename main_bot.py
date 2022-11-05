@@ -34,6 +34,7 @@ def run_bot():
 
 if __name__ == '__main__':
     import sys
+    import logging
     import bot_instance
 
     from variables import bot_config
@@ -42,6 +43,8 @@ if __name__ == '__main__':
     import events
 
     __all__ = ["inits", "events"]
+
+    logging.basicConfig(level=logging.INFO)
 
     bot = bot_instance.BOT
     run_bot()
