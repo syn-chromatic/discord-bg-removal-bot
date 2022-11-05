@@ -4,8 +4,11 @@ from utils.download_utils import DownloadMedia
 
 from utils.mime_utils import MimeTypeSniff
 from utils.embed_utils import ConstructEmbed
+
 from io import BytesIO
 from typing import Union
+from uuid import uuid4
+
 from utils.rembg_utils import BGProcess
 from utils.media_utils import ComposeGIF
 from utils.media_dataclasses import (
@@ -44,6 +47,11 @@ class MediaHandlerBase:
             raise error
         return data
 
+    @staticmethod
+    def _filename() -> str:
+        uuid_name = uuid4().hex[:10]
+        return uuid_name
+
     async def _reply_error(self, message: str):
         error_embed = ConstructEmbed().message(message)
         error_embed = error_embed.is_error().get_embed()
@@ -69,14 +77,20 @@ class MediaHandler(MediaHandlerBase):
             data_out = await BGProcess(self._ctx, data).process()
             if isinstance(data_out, AnimatedData):
                 out_io = ComposeGIF(data_out).reconstruct()
-                nextcord_file = nextcord.File(out_io, filename="output.gif")
+                nextcord_file = nextcord.File(
+                    fp=out_io,
+                    filename=f"{self._filename()}.gif"
+                )
                 return nextcord_file
 
             if isinstance(data_out, ImageFrame):
                 out_io = BytesIO()
                 data_out.image.save(out_io, "PNG")
                 out_io.seek(0)
-                nextcord_file = nextcord.File(out_io, filename="output.png")
+                nextcord_file = nextcord.File(
+                    fp=out_io,
+                    filename=f"{self._filename()}.png"
+                )
                 return nextcord_file
 
         elif mime_type in video_mime_types:
@@ -84,5 +98,8 @@ class MediaHandler(MediaHandlerBase):
             data_out = await BGProcess(self._ctx, data).process()
             if isinstance(data_out, VideoData):
                 out_io = ComposeGIF(data_out).reconstruct()
-                nextcord_file = nextcord.File(out_io, filename="output.gif")
+                nextcord_file = nextcord.File(
+                    fp=out_io,
+                    filename=f"{self._filename()}.gif"
+                )
                 return nextcord_file
