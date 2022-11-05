@@ -75,11 +75,14 @@ class MediaHandlerBase:
 
 
 class MediaHandler(MediaHandlerBase):
-    """MediaHandler class which handles different types of media files for rembg."""
+    """
+    MediaHandler class which handles different types of media files for rembg.
+    """
 
     async def handler(self) -> Union[nextcord.File, None]:
-        """Handle the type of media and removes the background."""
-
+        """
+        Handle the type of media and removes the background.
+        """
         data = self._retrieve_data()
 
         if data:
