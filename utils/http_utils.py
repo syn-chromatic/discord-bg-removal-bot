@@ -19,6 +19,8 @@ from utils.bgr.bgr_exceptions import (
 class DownloadFileBase(MimeTypeConfig):
     def __init__(self):
         super().__init__()
+        self._session: ClientSession = ClientSession()
+        self._response: Union[ClientResponse, None] = None
 
     @staticmethod
     async def _headers() -> dict[str, str]:
@@ -55,29 +57,29 @@ class DownloadFileBase(MimeTypeConfig):
         attachments = ctx.message.attachments
         if attachments:
             return attachments[0].url
-        await self._close_session()
+        await self._close_client()
         raise ContextAttachmentUnavailable()
 
     async def _get_content(self, response: ClientResponse) -> bytes:
         try:
             response_content = await response.content.read()
         except Exception:
-            await self._close_session()
+            await self._close_client()
             raise ResponseContentError()
         return response_content
 
     async def _get_response(self, url: str) -> ClientResponse:
         try:
-            self.session = ClientSession()
-            self.response = await self.session.get(url=url, timeout=2)
+            self._response = await self._session.get(url=url, timeout=2)
         except Exception:
-            await self._close_session()
+            await self._close_client()
             raise ResponseConnectionError()
-        return self.response
+        return self._response
 
-    async def _close_session(self):
-        await self.session.close()
-        self.response.close()
+    async def _close_client(self):
+        await self._session.close()
+        if self._response:
+            self._response.close()
 
     async def _from_url(self, url: str) -> ResponseFile:
         response = await self._get_response(url)
@@ -94,7 +96,7 @@ class DownloadFileBase(MimeTypeConfig):
                 mime_type=mime_type,
             )
             return response_file
-        await self._close_session()
+        await self._close_client()
         raise UnsupportedFileType(mime_type)
 
 
@@ -104,11 +106,11 @@ class DownloadFile(DownloadFileBase):
 
     async def from_url(self, url: str) -> ResponseFile:
         response_file = await self._from_url(url)
-        await self._close_session()
+        await self._close_client()
         return response_file
 
     async def from_ctx(self, ctx: Context) -> ResponseFile:
         attachment_url = await self._get_attachment_url(ctx)
         response_file = await self.from_url(attachment_url)
-        await self._close_session()
+        await self._close_client()
         return response_file
