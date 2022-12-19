@@ -1,22 +1,13 @@
-def report_error(error):
-    input(error)
-    sys.exit()
-
-
-def run_bot():
-    if not BOT_TOKEN:
-        report_error("Configure the BOT_TOKEN variable.")
-
-    if not COMMAND_PREFIX:
-        report_error("Configure the COMMAND_PREFIX variable.")
+def set_logger():
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("nextcord")
+    logger.setLevel(level=logging.INFO)
 
 
 if __name__ == "__main__":
-    import sys
-    from configuration.bot_config import (
-        BOT_TOKEN,
-        COMMAND_PREFIX,
-    )
+    import logging
+
+    set_logger()
 
     import inits
     import events
