@@ -1,6 +1,6 @@
 from nextcord.ext.commands import Context
 
-from utils.bgr.bgr_embeds import EmbedForm
+from utils.general_utils import EmbedForm
 from utils.bgr.bgr_handler import MediaHandler
 from utils.bgr.bgr_exceptions import BGR_EXCEPTIONS
 
