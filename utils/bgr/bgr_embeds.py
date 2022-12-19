@@ -18,7 +18,8 @@ class IteratorBase:
         embed_form.set_description("Initializing..")
         return embed_form
 
-    def _iteration_embed_form(self, idx: int, total_idx: int, image_io: BytesIO):
+    @staticmethod
+    def _iteration_embed_form(idx: int, total_idx: int, image_io: BytesIO):
         description = f"Processed {idx} out of {total_idx} frames."
         embed_form = EmbedForm()
         embed_form.set_description(description)
