@@ -1,8 +1,15 @@
-class MimeConnectionError(Exception):
-    """An exception raised when a connection error occurs during Mime Sniffing."""
+class ResponseConnectionError(Exception):
+    """An exception raised when a connection error occurs during HTTP connection."""
 
     def __init__(self):
         super().__init__("Connection error occurred.")
+
+
+class ResponseContentError(Exception):
+    """An exception raised when an error occurs while reading an HTTP response."""
+
+    def __init__(self):
+        super().__init__("Could not retrieve Response Content.")
 
 
 class UnsupportedFileType(Exception):
@@ -11,6 +18,16 @@ class UnsupportedFileType(Exception):
     def __init__(self, mime_type: str):
         msg = "Detected file mime type as: " f"'{mime_type}', which is not supported."
         super().__init__(msg)
+
+
+class ContextAttachmentUnavailable(Exception):
+    """
+    An exception raised when an error occurs
+    if attachment url is not present in Context.
+    """
+
+    def __init__(self):
+        super().__init__("Could not retrieve attachment URL.")
 
 
 class ImageError(Exception):
@@ -74,8 +91,10 @@ class SubceedsMinResolution(Exception):
 
 
 BGR_EXCEPTIONS = (
-    MimeConnectionError,
+    ResponseConnectionError,
+    ResponseContentError,
     UnsupportedFileType,
+    ContextAttachmentUnavailable,
     ImageError,
     ImageDecompositionError,
     VideoDecompositionError,

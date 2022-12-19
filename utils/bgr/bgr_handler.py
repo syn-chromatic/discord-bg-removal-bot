@@ -1,15 +1,14 @@
 import nextcord
 import asyncio
 
-from nextcord.ext.commands import Context
-from utils.bgr.bgr_download import DownloadMedia
-
-from utils.bgr.bgr_mime import MimeTypeSniff
 
 from io import BytesIO
 from typing import Union
 from uuid import uuid4
+from nextcord.ext.commands import Context
 
+from utils.http_utils import DownloadFile
+from utils.bgr.bgr_download import MediaData
 from utils.bgr.bgr_utils import BGProcess
 from utils.bgr.bgr_media import ComposeGIF
 from utils.bgr.bgr_dataclasses import (
@@ -26,11 +25,8 @@ class MediaHandlerBase:
         self._ctx = ctx
         self._url = url
 
-    def _get_response_file(self) -> ResponseFile:
-        try:
-            response_file = MimeTypeSniff(self._url).get_mime_type()
-        except Exception as error:
-            raise error
+    async def _get_response_file(self) -> ResponseFile:
+        response_file = await DownloadFile().from_url(self._url)
         return response_file
 
     def _retrieve_data(self, rsp_file: ResponseFile):
@@ -51,18 +47,12 @@ class MediaHandlerBase:
 
     @staticmethod
     def _get_image_data(rsp_file: ResponseFile) -> Union[ImageFrame, AnimatedData]:
-        try:
-            data = DownloadMedia(rsp_file).download_image()
-        except Exception as error:
-            raise error
+        data = MediaData(rsp_file).download_image()
         return data
 
     @staticmethod
     def _get_video_data(rsp_file: ResponseFile) -> VideoData:
-        try:
-            data = DownloadMedia(rsp_file).download_video()
-        except Exception as error:
-            raise error
+        data = MediaData(rsp_file).download_video()
         return data
 
     @staticmethod
@@ -76,7 +66,7 @@ class MediaHandler(MediaHandlerBase):
 
     async def handler(self) -> Union[nextcord.File, None]:
         """Handle the type of media and removes the background."""
-        rsp_file = await asyncio.to_thread(self._get_response_file)
+        rsp_file = await self._get_response_file()
         data = await asyncio.to_thread(self._retrieve_data, rsp_file)
 
         if data:

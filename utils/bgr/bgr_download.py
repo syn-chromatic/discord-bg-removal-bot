@@ -31,7 +31,7 @@ from utils.bgr.bgr_exceptions import (
 )
 
 
-class DownloadMedia:
+class MediaData:
     def __init__(self, response_file: ResponseFile):
         self.response_file = response_file
         self.content = self.response_file.content
