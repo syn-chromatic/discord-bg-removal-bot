@@ -56,8 +56,8 @@ Before running the bot you must configure the necessary variables in `/configura
 ## Optional Command Configuration
 You can find the variables in `/configuration/command_variables/bgr_variables.py`
 #### Rembg Command Variables
-- max_frames — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
-- max_px_image — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height
-- max_px_animated — The bot will reject to process requested multi-frame inputs that are above the assigned pixel count in width or height
+- MAX_FRAMES — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
+- MAX_PX_IMAGE — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height
+- MAX_PX_ANIMATED — The bot will reject to process requested multi-frame inputs that are above the assigned pixel count in width or height
 
 Run `main_bot.py` to start the bot.
