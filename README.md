@@ -43,17 +43,16 @@ The version I used was ImageMagick 7.1.0 Q16+HDRI-dll, you can get the Windows v
 
 
 ## Bot Configuration
-Before running the bot you must configure the necessary variables in `/variables/bot_config.py`
+Before running the bot you must configure the necessary variables in `/configuration/bot_config.py`
 ### Required Variables
-- BOT_TOKEN — Retreived from Discord Developer Portal after creating a bot application
+- BOT_TOKEN — Retrieved from Discord Developer Portal after creating a bot application
 - COMMAND_PREFIX — The prefix is a single-character string used to invoke commands to the bot - i.e. "$"
 
 ### Optional Variables
 - ACTIVITY_TEXT — For displaying the bot's activity status, such as *"Watching TEXT"*
-- RELAY_CHANNEL_ID — For sending images to a different channel from where the command is used then retrieving the image url and inserting it into an embed for previewing of processed images
 
 ## Optional Command Configuration
-You can find the variables in `/variables/command_variables/bgr_variables.py`
+You can find the variables in `/configuration/command_variables/bgr_variables.py`
 ### Rembg Command Variables
 - max_frames — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
 - max_px_image — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height

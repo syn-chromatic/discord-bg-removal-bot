@@ -9,14 +9,13 @@ from PIL import Image
 from PIL.Image import Image as ImageType
 from numpy import ndarray
 
-from utils.bgr.bgr_embeds import RelayIterator
+from utils.bgr.bgr_embeds import EmbedImageIterator
 from utils.bgr.bgr_dataclasses import (
     VideoFrame,
     AnimatedFrame,
     VideoData,
     AnimatedData,
     ImageFrame,
-    RelayConfig,
 )
 
 
@@ -151,7 +150,8 @@ class BGProcessBase:
     @staticmethod
     def _pil_to_bytesio(image: ImageType):
         image_io = BytesIO()
-        image.save(image_io, format="PNG")
+        image = image.convert("P", colors=256)
+        image.save(image_io, format="PNG", optimize=True)
         image_io.seek(0)
         return image_io
 
@@ -160,21 +160,6 @@ class BGProcessBase:
         frame = BGRemove(frame).remove_background()
         return frame
 
-    @staticmethod
-    def _init_config():
-        relay_config = RelayConfig(init=True, image=None, idx=0, total_idx=0)
-        return relay_config
-
-    @staticmethod
-    def _relay_config(image: Union[BytesIO, None], idx: int, total_idx: int):
-        relay_config = RelayConfig(
-            init=False,
-            image=image,
-            idx=idx,
-            total_idx=total_idx,
-        )
-        return relay_config
-
 
 class BGProcess(BGProcessBase):
     def __init__(self, ctx: Context, data: DATA_TYPES):
@@ -182,24 +167,17 @@ class BGProcess(BGProcessBase):
         self.ctx = ctx
 
     async def process(self):
-        iterator = RelayIterator(self.ctx)
-
-        relay_config = self._init_config()
-        await iterator.send(relay_config)
+        embed_iterator = EmbedImageIterator(self.ctx)
+        await embed_iterator.send()
         total_idx = len(self._frames)
 
-        for idx, frame in enumerate(self._frames):
-            if idx == 0:
-                relay_config = self._relay_config(None, 0, total_idx)
-                await iterator.send(relay_config)
-
+        for idx, frame in enumerate(self._frames, start=1):
             bg_frame = await asyncio.to_thread(self._process_image, frame)
             bg_image = self._retrieve_image(bg_frame)
             bg_image_io = await asyncio.to_thread(self._pil_to_bytesio, bg_image)
 
-            if idx + 1 != total_idx:
-                relay_config = self._relay_config(bg_image_io, idx + 1, total_idx)
-                await iterator.send(relay_config)
+            if idx != total_idx:
+                await embed_iterator.update(idx, total_idx, bg_image_io)
 
-        await iterator.clean()
+        await embed_iterator.clean()
         return self._data

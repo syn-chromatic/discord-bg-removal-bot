@@ -2,8 +2,11 @@ from io import BytesIO
 from PIL import Image
 
 from typing import Union
-
-from variables.command_variables import bgr_variables as bgr_vars
+from configuration.command_variables.bgr_variables import (
+    MAX_FRAMES,
+    MAX_PX_IMAGE,
+    MAX_PX_ANIMATED,
+)
 
 from utils.bgr.bgr_dataclasses import (
     ResponseFile,
@@ -47,9 +50,9 @@ class DownloadMedia:
     def get_max_pixels(num_frames: int) -> int:
         """Determines the maximum number of pixels."""
         if num_frames > 1:
-            max_px = bgr_vars.max_px_animated
+            max_px = MAX_PX_ANIMATED
         else:
-            max_px = bgr_vars.max_px_image
+            max_px = MAX_PX_IMAGE
         return max_px
 
     def open_image(self):
@@ -77,7 +80,7 @@ class DownloadMedia:
         width, height = image_pil.size
         image_format = str(image_pil.format)
 
-        max_frames = bgr_vars.max_frames
+        max_frames = MAX_FRAMES
         num_frames = self.get_num_frames(image_pil)
 
         min_px = 32
@@ -118,7 +121,7 @@ class DownloadMedia:
 
         width, height = video_data.width, video_data.height
 
-        max_frames = bgr_vars.max_frames
+        max_frames = MAX_FRAMES
         num_frames = video_data.framecount
 
         min_px = 32

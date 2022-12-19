@@ -1,0 +1,3 @@
+MAX_FRAMES: int = 50
+MAX_PX_IMAGE: int = 6000
+MAX_PX_ANIMATED: int = 640

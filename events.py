@@ -1,6 +1,8 @@
-from bot_instance import BOT
+from bot_instance import BotClient
 
+client = BotClient()
+bot = client.get_bot()
 
-@BOT.event
+@bot.event
 async def on_ready():
     print('Bot is ready.')

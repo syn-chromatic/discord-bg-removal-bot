@@ -1,20 +1,22 @@
-import bot_instance
 from nextcord.ext.commands import Context
 
-from utils.bgr.bgr_embeds import ConstructEmbed
+from utils.bgr.bgr_embeds import EmbedForm
 from utils.bgr.bgr_handler import MediaHandler
 from utils.bgr.bgr_exceptions import BGR_EXCEPTIONS
 
-bot = bot_instance.BOT
+from bot_instance import BotClient
+
+client = BotClient()
+bot = client.get_bot()
 
 
 @bot.command(description="")
 async def rembg(ctx: Context):
     """Command to remove the background of images or videos."""
     if not ctx.message.attachments:
-        embed = ConstructEmbed().message("Upload an image with the command.")
-        embed = embed.is_error().get_embed()
-        await ctx.reply(embed=embed, mention_author=False)
+        embed_form = EmbedForm().as_error()
+        embed_form.set_description("Upload an image with the command.")
+        await embed_form.ctx_reply(ctx, mention=False)
         return
 
     media_url = ctx.message.attachments[0].url
@@ -25,12 +27,11 @@ async def rembg(ctx: Context):
             await ctx.reply(file=file, mention_author=False)
 
     except BGR_EXCEPTIONS as error:
-        embed = ConstructEmbed().message(str(error))
-        embed = embed.is_error().get_embed()
-        await ctx.reply(embed=embed, mention_author=False)
+        embed_form = EmbedForm().as_error()
+        embed_form.set_description(str(error))
+        await embed_form.ctx_reply(ctx, mention=False)
 
     except Exception:
-        reply_str = "Unexpected error occurred."
-        embed = ConstructEmbed().message(reply_str)
-        embed = embed.is_error().get_embed()
-        await ctx.reply(embed=embed, mention_author=False)
+        embed_form = EmbedForm().as_error()
+        embed_form.set_description("Unexpected error occurred.")
+        await embed_form.ctx_reply(ctx, mention=False)
