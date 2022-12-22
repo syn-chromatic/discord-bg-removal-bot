@@ -77,7 +77,7 @@ class EmbedForm(EmbedFormBase):
         return self
 
     def as_error(self) -> Self:
-        self._embed.color = 0xC82323
+        self._embed.color = self._get_red()
         return self
 
     def get_embed(self) -> nextcord.Embed:
