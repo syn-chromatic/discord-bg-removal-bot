@@ -48,7 +48,7 @@ class BotClientBase:
 
 class BotClient(BotClientBase):
     def __init__(self):
-        pass
+        pass  # For Singleton class to work properly
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "instance") or not isinstance(cls.instance, cls):

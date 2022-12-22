@@ -119,7 +119,7 @@ class MediaData:
         """Get the number of frames in the image."""
         try:
             num_frames = image_pil.n_frames
-        except Exception:
+        except AttributeError:
             num_frames = 1
         return num_frames
 
