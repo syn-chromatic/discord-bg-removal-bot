@@ -70,12 +70,12 @@ class MediaHandlerBase:
 
     @staticmethod
     def _get_image_data(rsp_file: ResponseFile) -> Union[ImageFrame, AnimatedData]:
-        data = MediaData(rsp_file).download_image()
+        data = MediaData(rsp_file).get_image_data()
         return data
 
     @staticmethod
     def _get_video_data(rsp_file: ResponseFile) -> VideoData:
-        data = MediaData(rsp_file).download_video()
+        data = MediaData(rsp_file).get_video_data()
         return data
 
     @staticmethod
@@ -151,7 +151,7 @@ class MediaData:
             raise ImageDecompositionError()
         return animated_data
 
-    def download_image(self) -> Union[ImageFrame, AnimatedData]:
+    def get_image_data(self) -> Union[ImageFrame, AnimatedData]:
         image_pil = self.open_image()
 
         width, height = image_pil.size
@@ -192,7 +192,7 @@ class MediaData:
             raise VideoDecompositionError()
         return video_data
 
-    def download_video(self) -> VideoData:
+    def get_video_data(self) -> VideoData:
         video_io = BytesIO(self.content)
         video_data = self.decompose_video(video_io)
 
