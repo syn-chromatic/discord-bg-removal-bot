@@ -2,7 +2,7 @@ from nextcord.ext.commands import Context
 
 from utils.general_utils import EmbedForm
 from utils.bgr.bgr_handler import MediaHandler
-from exceptions.bgr_exceptions import BGRException
+from exceptions.bgr_exceptions import BaseBGRException
 
 from bot_instance import BotClient
 
@@ -26,7 +26,7 @@ async def rembg(ctx: Context):
         if file:
             await ctx.reply(file=file, mention_author=False)
 
-    except BGRException as error:
+    except BaseBGRException as error:
         embed_form = EmbedForm().as_error()
         embed_form.set_description(str(error))
         await embed_form.ctx_reply(ctx, mention=False)
