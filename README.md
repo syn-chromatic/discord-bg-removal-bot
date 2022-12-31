@@ -1,6 +1,7 @@
 # Discord bot for automatic background removals with support for PNGs, JPEGs, WEBPs, GIFs and MP4s.
 ___
 # Bot Preview
+Main command to use is rembg, depending on what you set the COMMAND_PREFIX variable as.
 
 #### With CPU processing it takes around 1 minute for this particular video
 *Video - 482x640 / x37 frames*
