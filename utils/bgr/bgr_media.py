@@ -239,8 +239,9 @@ class ComposeGIFBase:
     def _retrieve_frames(self) -> list[AbstractFrame]:
         return self._data.frames
 
+    @staticmethod
     def _retrieve_frame_and_duration(
-        self, frame: AbstractFrame
+        frame: AbstractFrame,
     ) -> tuple[ImageType, Fraction]:
         image = frame.image
         duration = frame.duration
@@ -296,16 +297,16 @@ class DisposeDuplicateBase:
     def _retrieve_frames(self) -> list[AbstractFrame]:
         return self._data.frames
 
+    @staticmethod
     def _retrieve_frame_and_duration(
-        self, frame: AbstractFrame
+        frame: AbstractFrame,
     ) -> tuple[ImageType, Fraction]:
         image = frame.image
         duration = frame.duration
         return image, duration
 
-    def _insert_new_duration(
-        self, frame: AbstractFrame, duration: Fraction
-    ) -> AbstractFrame:
+    @staticmethod
+    def _insert_new_duration(frame: AbstractFrame, duration: Fraction) -> AbstractFrame:
         frame.duration = duration
         return frame
 

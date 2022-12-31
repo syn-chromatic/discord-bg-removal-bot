@@ -166,9 +166,8 @@ class MediaData:
             raise ImageDecompositionError()
         return animated_data
 
-    def create_image_data(
-        self, image_pil: ImageType, width: int, height: int
-    ) -> ImageData:
+    @staticmethod
+    def create_image_data(image_pil: ImageType, width: int, height: int) -> ImageData:
         image_frame = ImageFrame(
             image=image_pil, width=width, height=height, duration=Fraction(0)
         )

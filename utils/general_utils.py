@@ -15,13 +15,16 @@ class EmbedFormBase:
         self._embed.color = self._get_green()
         self._file_obj = None
 
-    def _get_green(self) -> int:
+    @staticmethod
+    def _get_green() -> int:
         return 0x00FF00
 
-    def _get_red(self) -> int:
+    @staticmethod
+    def _get_red() -> int:
         return 0xC82323
 
-    def _get_filename(self, file_ext: str = "png") -> str:
+    @staticmethod
+    def _get_filename(file_ext: str = "png") -> str:
         uuid_name = uuid4().hex[:10]
         filename = f"{uuid_name}.{file_ext}"
         return filename

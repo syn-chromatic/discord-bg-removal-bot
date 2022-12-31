@@ -23,7 +23,8 @@ class BGRemoveBase:
     def _retrieve_image(self) -> ImageType:
         return self._frame.image
 
-    def _insert_image(self, image: ImageType, frame: AbstractFrame) -> AbstractFrame:
+    @staticmethod
+    def _insert_image(image: ImageType, frame: AbstractFrame) -> AbstractFrame:
         frame.image = image
         return frame
 
@@ -60,7 +61,8 @@ class BGProcessBase:
     def _retrieve_frames(self) -> list[AbstractFrame]:
         return self._data.frames
 
-    def _retrieve_image(self, frame: AbstractFrame) -> ImageType:
+    @staticmethod
+    def _retrieve_image(frame: AbstractFrame) -> ImageType:
         return frame.image
 
     @staticmethod

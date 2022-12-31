@@ -1,6 +1,3 @@
-import logging
-import traceback
-
 from aiohttp import ClientResponse, ClientSession
 from sniffpy.mimetype import parse_mime_type
 from nextcord.ext.commands import Context
@@ -16,8 +13,6 @@ from exceptions.http_exceptions import (
     ResponseContentError,
     UnsupportedMimeType,
 )
-
-logger = logging.getLogger("nextcord")
 
 
 class ContextHTTPBase:
@@ -50,13 +45,15 @@ class ContextHTTPBase:
         content_mb = content_nbytes / 1024 / 1024
         return content_mb
 
-    async def _get_attachment_url(self, ctx: Context) -> str:
+    @staticmethod
+    async def _get_attachment_url(ctx: Context) -> str:
         attachments = ctx.message.attachments
         if attachments:
             return attachments[0].url
         raise ContextAttachmentUnavailable()
 
-    async def _get_content(self, response: ClientResponse) -> bytes:
+    @staticmethod
+    async def _get_content(response: ClientResponse) -> bytes:
         try:
             response_content = await response.content.read()
         except Exception:
@@ -96,10 +93,6 @@ class ContextHTTPBase:
         response = await self._get_response(url)
         bytes_io = await self._get_content_io(response)
         return bytes_io
-
-    def _format_traceback(self, tb) -> str:
-        frmt_tb = "".join(traceback.format_tb(tb))
-        return frmt_tb
 
 
 class ContextHTTPFile(ContextHTTPBase):
