@@ -8,7 +8,7 @@ from io import BytesIO
 from typing import Union
 
 from utils.bgr.bgr_dataclasses import ResponseFile, MimeTypeConfig
-from utils.bgr.bgr_exceptions import (
+from exceptions.bgr_exceptions import (
     ResponseConnectionError,
     ResponseContentError,
     UnsupportedFileType,

@@ -33,7 +33,7 @@ from utils.bgr.bgr_media import (
     DisposeDuplicateFrames,
 )
 
-from utils.bgr.bgr_exceptions import (
+from exceptions.bgr_exceptions import (
     ImageError,
     ImageDecompositionError,
     VideoDecompositionError,
