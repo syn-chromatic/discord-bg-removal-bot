@@ -11,67 +11,19 @@ from numpy import ndarray
 
 from utils.bgr.bgr_embeds import EmbedImageIterator
 from utils.bgr.bgr_dataclasses import (
-    VideoFrame,
-    AnimatedFrame,
-    VideoData,
-    AnimatedData,
-    ImageFrame,
+    AbstractData,
+    AbstractFrame,
 )
 
 
-FRAME_TYPES = Union[VideoFrame, AnimatedFrame, ImageFrame]
-DATA_TYPES = Union[VideoData, AnimatedData, ImageFrame]
-
-
 class BGRemoveBase:
-    def __init__(self, frame: Union[ImageFrame, VideoFrame, AnimatedFrame]):
+    def __init__(self, frame: AbstractFrame):
         self._frame = frame
 
-    def _retrieve_image(self):
-        if isinstance(self._frame, VideoFrame):
-            return self._video_frame(self._frame)
+    def _retrieve_image(self) -> ImageType:
+        return self._frame.image
 
-        if isinstance(self._frame, AnimatedFrame):
-            return self._animated_frame(self._frame)
-
-        return self._image_frame(self._frame)
-
-    def _insert_image(self, image: ImageType, frame: FRAME_TYPES):
-        if isinstance(frame, VideoFrame):
-            return self._ins_video_frame(image, frame)
-
-        if isinstance(frame, AnimatedFrame):
-            return self._ins_animated_frame(image, frame)
-
-        return self._ins_image_frame(image, frame)
-
-    @staticmethod
-    def _video_frame(video_frame: VideoFrame):
-        image = video_frame.image
-        return image
-
-    @staticmethod
-    def _animated_frame(animated_frame: AnimatedFrame):
-        image = animated_frame.image
-        return image
-
-    @staticmethod
-    def _image_frame(image_frame: ImageFrame):
-        image = image_frame.image
-        return image
-
-    @staticmethod
-    def _ins_video_frame(image: ImageType, frame: VideoFrame) -> VideoFrame:
-        frame.image = image
-        return frame
-
-    @staticmethod
-    def _ins_animated_frame(image: ImageType, frame: AnimatedFrame) -> AnimatedFrame:
-        frame.image = image
-        return frame
-
-    @staticmethod
-    def _ins_image_frame(image: ImageType, frame: ImageFrame) -> ImageFrame:
+    def _insert_image(self, image: ImageType, frame: AbstractFrame) -> AbstractFrame:
         frame.image = image
         return frame
 
@@ -87,11 +39,11 @@ class BGRemoveBase:
 
 
 class BGRemove(BGRemoveBase):
-    def __init__(self, frame: FRAME_TYPES):
+    def __init__(self, frame: AbstractFrame):
         super().__init__(frame)
         self.frame = frame
 
-    def remove_background(self) -> FRAME_TYPES:
+    def remove_background(self) -> AbstractFrame:
         image = self._retrieve_image()
         rembg_out = remove(data=image)
         rembg_image = self._image_conversion(rembg_out)
@@ -100,55 +52,19 @@ class BGRemove(BGRemoveBase):
 
 
 class BGProcessBase:
-    def __init__(self, data: DATA_TYPES):
+    def __init__(self, data: AbstractData):
         self._data = data
         self._animated_io: BytesIO = BytesIO()
         self._frames = self._retrieve_frames()
 
-    def _retrieve_frames(self):
-        if isinstance(self._data, VideoData):
-            return self._video_frames(self._data)
+    def _retrieve_frames(self) -> list[AbstractFrame]:
+        return self._data.frames
 
-        if isinstance(self._data, AnimatedData):
-            return self._animated_frames(self._data)
-
-        return self._image_frames(self._data)
-
-    def _retrieve_image(self, frame: FRAME_TYPES):
-        if isinstance(frame, VideoFrame):
-            return self._video_image(frame)
-
-        if isinstance(frame, AnimatedFrame):
-            return self._animated_image(frame)
-
-        return self._image(frame)
+    def _retrieve_image(self, frame: AbstractFrame) -> ImageType:
+        return frame.image
 
     @staticmethod
-    def _video_frames(data: VideoData):
-        return data.frames
-
-    @staticmethod
-    def _animated_frames(data: AnimatedData):
-        return data.frames
-
-    @staticmethod
-    def _image_frames(data: ImageFrame):
-        return [data]
-
-    @staticmethod
-    def _video_image(video_frame: VideoFrame):
-        return video_frame.image
-
-    @staticmethod
-    def _animated_image(animated_frame: AnimatedFrame):
-        return animated_frame.image
-
-    @staticmethod
-    def _image(image_frame: ImageFrame):
-        return image_frame.image
-
-    @staticmethod
-    def _pil_to_bytesio(image: ImageType):
+    def _pil_to_bytesio(image: ImageType) -> BytesIO:
         image_io = BytesIO()
         image = image.convert("P", colors=256)
         image.save(image_io, format="PNG", optimize=True)
@@ -156,17 +72,17 @@ class BGProcessBase:
         return image_io
 
     @staticmethod
-    def _process_image(frame: FRAME_TYPES):
+    def _process_image(frame: AbstractFrame) -> AbstractFrame:
         frame = BGRemove(frame).remove_background()
         return frame
 
 
 class BGProcess(BGProcessBase):
-    def __init__(self, ctx: Context, data: DATA_TYPES):
+    def __init__(self, ctx: Context, data: AbstractData):
         super().__init__(data)
         self.ctx = ctx
 
-    async def process(self):
+    async def process(self) -> AbstractData:
         embed_iterator = EmbedImageIterator(self.ctx)
         await embed_iterator.send()
         total_idx = len(self._frames)

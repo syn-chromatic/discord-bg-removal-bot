@@ -15,24 +15,21 @@ class EmbedFormBase:
         self._embed.color = self._get_green()
         self._file_obj = None
 
-    @staticmethod
-    def _get_green() -> int:
+    def _get_green(self) -> int:
         return 0x00FF00
 
-    @staticmethod
-    def _get_red() -> int:
+    def _get_red(self) -> int:
         return 0xC82323
 
-    @staticmethod
-    def _get_filename(file_ext: str = "png") -> str:
+    def _get_filename(self, file_ext: str = "png") -> str:
         uuid_name = uuid4().hex[:10]
         filename = f"{uuid_name}.{file_ext}"
         return filename
 
     @staticmethod
-    def _pil_to_bytes_io(image_pil: ImageType, image_format: str) -> BytesIO:
+    def _pil_to_io(image_pil: ImageType, image_format: str, optimize: bool) -> BytesIO:
         bytes_io = BytesIO()
-        image_pil.save(bytes_io, format=image_format)
+        image_pil.save(bytes_io, format=image_format, optimize=optimize)
         bytes_io.seek(0)
         return bytes_io
 
@@ -57,7 +54,7 @@ class EmbedForm(EmbedFormBase):
         self._embed.color = color_hex
         return self
 
-    def add_field(self, name: str, value: str, inline: bool) -> Self:
+    def add_field(self, name: str, value: str, inline: bool = False) -> Self:
         self._embed.add_field(name=name, value=value, inline=inline)
         return self
 
@@ -67,8 +64,10 @@ class EmbedForm(EmbedFormBase):
         self._embed.set_image(url=f"attachment://{filename}")
         return self
 
-    def set_image_pillow(self, image_pil: ImageType, image_format: str) -> Self:
-        bytes_io = self._pil_to_bytes_io(image_pil, image_format)
+    def set_image_pillow(
+        self, image_pil: ImageType, image_format: str, optimize: bool = True
+    ) -> Self:
+        bytes_io = self._pil_to_io(image_pil, image_format, optimize)
         self.set_image_file(bytes_io)
         return self
 
@@ -77,16 +76,19 @@ class EmbedForm(EmbedFormBase):
         return self
 
     def as_error(self) -> Self:
-        self._embed.color = self._get_red()
+        self._embed.color = 0xC82323
         return self
 
     def get_embed(self) -> nextcord.Embed:
         return self._embed
 
+    def get_file_object(self) -> nextcord.File:
+        return self._file_obj
+
     async def ctx_send(self, ctx: Context):
         return await ctx.send(embed=self._embed, file=self._file_obj)
 
-    async def ctx_reply(self, ctx: Context, mention: bool):
+    async def ctx_reply(self, ctx: Context, mention: bool = True):
         return await ctx.send(
             embed=self._embed,
             file=self._file_obj,

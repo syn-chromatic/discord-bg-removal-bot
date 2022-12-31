@@ -1,46 +1,15 @@
 from exceptions.bot_exceptions import BaseBotException
 
 
-class BaseBGRException(BaseBotException):
-    """This is a base exception for BGR."""
-
-    def __init__(self, error: str):
-        super().__init__(error)
-
-
-class ResponseConnectionError(BaseBGRException):
-    """An exception raised when a connection error occurs during HTTP connection."""
-
-    def __init__(self):
-        super().__init__("Connection error occurred.")
-
-
-class ResponseContentError(BaseBGRException):
-    """An exception raised when an error occurs while reading an HTTP response."""
-
-    def __init__(self):
-        super().__init__("Could not retrieve Response Content.")
-
-
-class UnsupportedFileType(BaseBGRException):
+class UnsupportedFileType(BaseBotException):
     """An exception raised when an unsupported file type is detected."""
 
-    def __init__(self, mime_type: str):
-        msg = "Detected file mime type as: " f"'{mime_type}', which is not supported."
+    def __init__(self, file_type: str):
+        msg = "Detected file type as: " f"'{file_type}', which is not supported."
         super().__init__(msg)
 
 
-class ContextAttachmentUnavailable(BaseBGRException):
-    """
-    An exception raised when an error occurs
-    if attachment url is not present in Context.
-    """
-
-    def __init__(self):
-        super().__init__("Could not retrieve attachment URL.")
-
-
-class ImageError(BaseBGRException):
+class ImageError(BaseBotException):
     """An exception raised when an error occurs upon loading an image."""
 
     def __init__(self):
@@ -48,7 +17,7 @@ class ImageError(BaseBGRException):
         super().__init__(msg)
 
 
-class ImageDecompositionError(BaseBGRException):
+class ImageDecompositionError(BaseBotException):
     """An exception raised when an error occurs in AnimatedDecompose."""
 
     def __init__(self):
@@ -56,7 +25,7 @@ class ImageDecompositionError(BaseBGRException):
         super().__init__(msg)
 
 
-class VideoDecompositionError(BaseBGRException):
+class VideoDecompositionError(BaseBotException):
     """An exception raised when an error occurs in VideoDecompose."""
 
     def __init__(self):
@@ -64,7 +33,7 @@ class VideoDecompositionError(BaseBGRException):
         super().__init__(msg)
 
 
-class ExceedsMaxFrames(BaseBGRException):
+class ExceedsMaxFrames(BaseBotException):
     """
     An exception raised when a video or animated file
     exceeds a specified frames limit.
@@ -78,7 +47,7 @@ class ExceedsMaxFrames(BaseBGRException):
         super().__init__(msg)
 
 
-class ExceedsMaxResolution(BaseBGRException):
+class ExceedsMaxResolution(BaseBotException):
     """An exception raised when a media file exceeds a specified maximum resolution."""
 
     def __init__(self, fp_format: str, width: int, height: int, max_px: int):
@@ -89,7 +58,7 @@ class ExceedsMaxResolution(BaseBGRException):
         super().__init__(msg)
 
 
-class SubceedsMinResolution(BaseBGRException):
+class SubceedsMinResolution(BaseBotException):
     """An exception raised when a media file subceeds a specified minimum resolution."""
 
     def __init__(self, fp_format: str, width: int, height: int, min_px: int):

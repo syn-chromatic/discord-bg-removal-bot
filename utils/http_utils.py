@@ -1,4 +1,5 @@
-import sniffpy
+import logging
+import traceback
 
 from aiohttp import ClientResponse, ClientSession
 from sniffpy.mimetype import parse_mime_type
@@ -7,20 +8,24 @@ from nextcord.ext.commands import Context
 from io import BytesIO
 from typing import Union
 
-from utils.bgr.bgr_dataclasses import ResponseFile, MimeTypeConfig
-from exceptions.bgr_exceptions import (
+from utils.bgr.bgr_dataclasses import MimeTypeConfig
+from exceptions.exception_logging import ExceptionLogger
+from exceptions.bot_exceptions import ContextAttachmentUnavailable
+from exceptions.http_exceptions import (
     ResponseConnectionError,
     ResponseContentError,
-    UnsupportedFileType,
-    ContextAttachmentUnavailable,
+    UnsupportedMimeType,
 )
 
+logger = logging.getLogger("nextcord")
 
-class DownloadFileBase(MimeTypeConfig):
+
+class ContextHTTPBase:
     def __init__(self):
         super().__init__()
         self._session: ClientSession = ClientSession()
         self._response: Union[ClientResponse, None] = None
+        self._content: bytes = bytes()
 
     @staticmethod
     async def _headers() -> dict[str, str]:
@@ -30,14 +35,6 @@ class DownloadFileBase(MimeTypeConfig):
             "Chrome/34.0.1847.137 Safari/537.36"
         }
         return headers
-
-    @staticmethod
-    async def _get_mime_type(content_chunk: bytes) -> str:
-        sniff_type = str(sniffpy.sniff(content_chunk))
-
-        parse_mime = parse_mime_type(sniff_type)
-        mime_type = parse_mime.subtype
-        return mime_type
 
     @staticmethod
     async def _get_content_size(response: ClientResponse) -> Union[float, None]:
@@ -57,60 +54,80 @@ class DownloadFileBase(MimeTypeConfig):
         attachments = ctx.message.attachments
         if attachments:
             return attachments[0].url
-        await self._close_client()
         raise ContextAttachmentUnavailable()
 
     async def _get_content(self, response: ClientResponse) -> bytes:
         try:
             response_content = await response.content.read()
         except Exception:
-            await self._close_client()
             raise ResponseContentError()
         return response_content
 
-    async def _get_response(self, url: str) -> ClientResponse:
+    async def _get_content_io(self, response: ClientResponse) -> BytesIO:
+        bytes_content = await self._get_content(response)
+        bytes_io = BytesIO(bytes_content)
+        return bytes_io
+
+    async def _setup_response(self, url: str) -> ClientResponse:
         try:
             self._response = await self._session.get(url=url, timeout=2)
         except Exception:
-            await self._close_client()
             raise ResponseConnectionError()
         return self._response
+
+    async def _get_response(self, url: str) -> ClientResponse:
+        if self._response:
+            return self._response
+        return await self._setup_response(url)
+
+    async def _get_mime_type(self, url: str) -> str:
+        response = await self._get_response(url)
+        content_type = response.content_type
+        parse_mime = parse_mime_type(content_type)
+        mime_type = parse_mime.subtype
+        return mime_type
 
     async def _close_client(self):
         await self._session.close()
         if self._response:
             self._response.close()
 
-    async def _from_url(self, url: str) -> ResponseFile:
+    async def _from_url(self, url: str) -> BytesIO:
         response = await self._get_response(url)
-        content_iter = response.content.iter_chunked(2048)
-        content_chunk = await content_iter.__anext__()
-        mime_type = await self._get_mime_type(content_chunk)
+        bytes_io = await self._get_content_io(response)
+        return bytes_io
 
-        if mime_type in self.mime_types:
-            remaining_chunks = await self._get_content(response)
-            content = content_chunk + remaining_chunks
-
-            response_file = ResponseFile(
-                content=content,
-                mime_type=mime_type,
-            )
-            return response_file
-        await self._close_client()
-        raise UnsupportedFileType(mime_type)
+    def _format_traceback(self, tb) -> str:
+        frmt_tb = "".join(traceback.format_tb(tb))
+        return frmt_tb
 
 
-class DownloadFile(DownloadFileBase):
+class ContextHTTPFile(ContextHTTPBase):
     def __init__(self):
         super().__init__()
 
-    async def from_url(self, url: str) -> ResponseFile:
-        response_file = await self._from_url(url)
-        await self._close_client()
-        return response_file
+    async def __aenter__(self):
+        return self
 
-    async def from_ctx(self, ctx: Context) -> ResponseFile:
-        attachment_url = await self._get_attachment_url(ctx)
-        response_file = await self.from_url(attachment_url)
+    async def __aexit__(self, exception_type, exception, tb):
+        if exception:
+            ExceptionLogger(exception).log()
         await self._close_client()
-        return response_file
+
+    async def get_mime_type(self, url: str) -> str:
+        mime_type = await self._get_mime_type(url)
+        return mime_type
+
+    async def ensure_mime_type(self, url: str, mime_config: MimeTypeConfig) -> str:
+        mime_type = await self._get_mime_type(url)
+        if mime_type in mime_config.mime_types:
+            return mime_type
+        raise UnsupportedMimeType(mime_type)
+
+    async def get_ctx_attachment_url(self, ctx: Context) -> str:
+        attachment_url = await self._get_attachment_url(ctx)
+        return attachment_url
+
+    async def from_url(self, url: str) -> BytesIO:
+        bytes_io = await self._from_url(url)
+        return bytes_io

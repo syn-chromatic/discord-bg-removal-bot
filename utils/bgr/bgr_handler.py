@@ -2,13 +2,18 @@ import nextcord
 import asyncio
 
 from PIL import Image
+from PIL.Image import Image as ImageType
 from io import BytesIO
 from typing import Union
 from uuid import uuid4
+
+
+from fractions import Fraction
 from nextcord.ext.commands import Context
 
-from utils.http_utils import DownloadFile
+from utils.http_utils import ContextHTTPFile
 from utils.bgr.bgr_utils import BGProcess
+from exceptions.exception_logging import ExceptionLogger
 
 from configuration.command_variables.bgr_variables import (
     MAX_FRAMES,
@@ -19,10 +24,9 @@ from configuration.command_variables.bgr_variables import (
 
 from utils.bgr.bgr_dataclasses import (
     MimeTypeConfig,
-    ResponseFile,
     ImageFrame,
-    VideoData,
-    AnimatedData,
+    AbstractData,
+    ImageData,
 )
 
 
@@ -33,7 +37,8 @@ from utils.bgr.bgr_media import (
     DisposeDuplicateFrames,
 )
 
-from exceptions.bgr_exceptions import (
+
+from exceptions.media_exceptions import (
     ImageError,
     ImageDecompositionError,
     VideoDecompositionError,
@@ -47,35 +52,43 @@ class MediaHandlerBase:
     def __init__(self, ctx: Context, url: str):
         self._ctx = ctx
         self._url = url
+        self._mime_config = MimeTypeConfig()
 
-    async def _get_response_file(self) -> ResponseFile:
-        response_file = await DownloadFile().from_url(self._url)
-        return response_file
+    async def _validate_mime_type(self) -> str:
+        async with ContextHTTPFile() as cf:
+            mime_type = await cf.ensure_mime_type(self._url, self._mime_config)
+        return mime_type
 
-    def _retrieve_data(self, rsp_file: ResponseFile):
-        image_mime_types = MimeTypeConfig().image_mime_types
-        video_mime_types = MimeTypeConfig().video_mime_types
-        mime_type = rsp_file.mime_type
+    async def _get_response_file(self) -> BytesIO:
+        async with ContextHTTPFile() as cf:
+            bytes_io = await cf.from_url(self._url)
+        return bytes_io
+
+    def _retrieve_data(
+        self, bytes_io: BytesIO, mime_type: str
+    ) -> Union[AbstractData, None]:
+        image_mime_types = self._mime_config.image_mime_types
+        video_mime_types = self._mime_config.video_mime_types
 
         if mime_type in image_mime_types:
-            return self._get_image_data(rsp_file)
+            return self._get_image_data(bytes_io, mime_type)
 
         if mime_type in video_mime_types:
-            return self._get_video_data(rsp_file)
+            return self._get_video_data(bytes_io, mime_type)
 
-    def _create_file(self, output: BytesIO, ext: str):
+    def _create_file(self, output: BytesIO, ext: str) -> nextcord.File:
         filename = self._filename() + f".{ext}"
         nextcord_file = nextcord.File(fp=output, filename=filename)
         return nextcord_file
 
     @staticmethod
-    def _get_image_data(rsp_file: ResponseFile) -> Union[ImageFrame, AnimatedData]:
-        data = MediaData(rsp_file).get_image_data()
+    def _get_image_data(bytes_io: BytesIO, mime_type: str) -> AbstractData:
+        data = MediaData(bytes_io, mime_type).get_image_data()
         return data
 
     @staticmethod
-    def _get_video_data(rsp_file: ResponseFile) -> VideoData:
-        data = MediaData(rsp_file).get_video_data()
+    def _get_video_data(bytes_io: BytesIO, mime_type: str) -> AbstractData:
+        data = MediaData(bytes_io, mime_type).get_video_data()
         return data
 
     @staticmethod
@@ -89,30 +102,32 @@ class MediaHandler(MediaHandlerBase):
 
     async def handler(self) -> Union[nextcord.File, None]:
         """Handle the type of media and removes the background."""
-        rsp_file = await self._get_response_file()
-        data = await asyncio.to_thread(self._retrieve_data, rsp_file)
+        mime_type = await self._validate_mime_type()
+        bytes_io = await self._get_response_file()
 
-        if data:
-            data_out = await BGProcess(self._ctx, data).process()
+        data = await asyncio.to_thread(self._retrieve_data, bytes_io, mime_type)
 
-            if isinstance(data_out, ImageFrame):
-                out_io = BytesIO()
-                data_out.image.save(out_io, "PNG")
-                out_io.seek(0)
-                nextcord_file = self._create_file(out_io, "png")
-                return nextcord_file
+        if not data:
+            return
+        data_out = await BGProcess(self._ctx, data).process()
 
-            if isinstance(data_out, (VideoData, AnimatedData)):
-                out_io = ComposeGIF(data_out).reconstruct()
-                nextcord_file = self._create_file(out_io, "gif")
-                return nextcord_file
+        if isinstance(data_out, ImageData):
+            out_io = BytesIO()
+            image_frame = data_out.frames[0]
+            image_frame.image.save(out_io, "PNG")
+            out_io.seek(0)
+            nextcord_file = self._create_file(out_io, "png")
+            return nextcord_file
+
+        out_io = ComposeGIF(data_out).reconstruct()
+        nextcord_file = self._create_file(out_io, "gif")
+        return nextcord_file
 
 
 class MediaData:
-    def __init__(self, response_file: ResponseFile):
-        self.response_file = response_file
-        self.content = self.response_file.content
-        self.mime_type = self.response_file.mime_type
+    def __init__(self, bytes_io: BytesIO, mime_type: str):
+        self.bytes_io = bytes_io
+        self.mime_type = mime_type
 
     @staticmethod
     def get_num_frames(image_pil: Image.Image) -> int:
@@ -133,25 +148,41 @@ class MediaData:
         return max_px
 
     def open_image(self):
-        image_io = BytesIO(self.content)
-
         try:
-            image_pil = Image.open(image_io)
-        except Exception:
+            image_pil = Image.open(self.bytes_io)
+        except Exception as error:
+            ExceptionLogger(error).log()
             raise ImageError()
-
         return image_pil
 
     @staticmethod
-    def decompose_animated(image_pil: Image.Image):
+    def decompose_animated(image_pil: Image.Image) -> AbstractData:
         try:
             animated_data = AnimatedDecompose(image_pil).create_animated_data()
-            animated_data = DisposeDuplicateFrames().dispose_animated(animated_data)
-        except Exception:
+            frame_disposal = DisposeDuplicateFrames(animated_data)
+            animated_data = frame_disposal.dispose_frames()
+        except Exception as error:
+            ExceptionLogger(error).log()
             raise ImageDecompositionError()
         return animated_data
 
-    def get_image_data(self) -> Union[ImageFrame, AnimatedData]:
+    def create_image_data(
+        self, image_pil: ImageType, width: int, height: int
+    ) -> ImageData:
+        image_frame = ImageFrame(
+            image=image_pil, width=width, height=height, duration=Fraction(0)
+        )
+        image_data = ImageData(
+            frames=[image_frame],
+            framecount=1,
+            width=width,
+            height=height,
+            avg_fps=Fraction(1),
+            total_duration=Fraction(0),
+        )
+        return image_data
+
+    def get_image_data(self) -> AbstractData:
         image_pil = self.open_image()
 
         width, height = image_pil.size
@@ -174,27 +205,24 @@ class MediaData:
             raise SubceedsMinResolution(image_format, width, height, min_px)
 
         if num_frames == 1:
-            image_data = ImageFrame(
-                image=image_pil,
-                width=width,
-                height=height,
-            )
+            image_data = self.create_image_data(image_pil, width, height)
             return image_data
 
         return self.decompose_animated(image_pil)
 
     @staticmethod
-    def decompose_video(video_io: BytesIO) -> VideoData:
+    def decompose_video(video_io: BytesIO) -> AbstractData:
         try:
             video_data = VideoDecompose(video_io).create_video_data()
-            video_data = DisposeDuplicateFrames().dispose_video(video_data)
-        except Exception:
+            frame_disposal = DisposeDuplicateFrames(video_data)
+            video_data = frame_disposal.dispose_frames()
+        except Exception as error:
+            ExceptionLogger(error).log()
             raise VideoDecompositionError()
         return video_data
 
-    def get_video_data(self) -> VideoData:
-        video_io = BytesIO(self.content)
-        video_data = self.decompose_video(video_io)
+    def get_video_data(self) -> AbstractData:
+        video_data = self.decompose_video(self.bytes_io)
 
         width, height = video_data.width, video_data.height
 

@@ -19,7 +19,7 @@ class IteratorBase:
         return embed_form
 
     @staticmethod
-    def _iteration_embed_form(idx: int, total_idx: int, image_io: BytesIO):
+    def _iteration_embed_form(idx: int, total_idx: int, image_io: BytesIO) -> EmbedForm:
         description = f"Processed {idx} out of {total_idx} frames."
         embed_form = EmbedForm()
         embed_form.set_description(description)
