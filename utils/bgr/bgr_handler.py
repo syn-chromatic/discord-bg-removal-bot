@@ -61,7 +61,7 @@ class MediaHandlerBase:
 
     async def _get_response_file(self) -> BytesIO:
         async with ContextHTTPFile() as cf:
-            bytes_io = await cf.from_url(self._url)
+            bytes_io = await cf.get_file_from_url(self._url)
         return bytes_io
 
     def _retrieve_data(

@@ -121,6 +121,11 @@ class ContextHTTPFile(ContextHTTPBase):
         attachment_url = await self._get_attachment_url(ctx)
         return attachment_url
 
-    async def from_url(self, url: str) -> BytesIO:
+    async def get_file_from_url(self, url: str) -> BytesIO:
         bytes_io = await self._from_url(url)
+        return bytes_io
+
+    async def get_file_from_ctx(self, ctx: Context) -> BytesIO:
+        attachment_url = await self._get_attachment_url(ctx)
+        bytes_io = await self._from_url(attachment_url)
         return bytes_io
