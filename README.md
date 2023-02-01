@@ -1,8 +1,6 @@
 # Discord bot for automatic background removals with support for PNGs, JPEGs, WEBPs, GIFs and MP4s.
-___
-# Bot Preview
-Main command to use is rembg, depending on what you set the COMMAND_PREFIX variable as.
 
+# Bot Preview
 #### With CPU processing it takes around 1 minute for this particular video
 *Video - 482x640 / x37 frames*
 
@@ -50,9 +48,6 @@ Before running the bot you must configure the necessary variables in `/configura
 - BOT_TOKEN — Retrieved from Discord Developer Portal after creating a bot application
 - COMMAND_PREFIX — The prefix is a single-character string used to invoke commands to the bot - i.e. "$"
 
-#### Optional Variables
-- ACTIVITY_TEXT — For displaying the bot's activity status, such as *"Watching TEXT"*
-
 
 ## Optional Command Configuration
 You can find the variables in `/configuration/command_variables/bgr_variables.py`
@@ -60,5 +55,16 @@ You can find the variables in `/configuration/command_variables/bgr_variables.py
 - MAX_FRAMES — The bot will reject to process requested multi-frame inputs that have more than the assigned frames count
 - MAX_PX_IMAGE — The bot will reject to process requested single-frame inputs that are above the assigned pixel count in width or height
 - MAX_PX_ANIMATED — The bot will reject to process requested multi-frame inputs that are above the assigned pixel count in width or height
+
+___
+
+## Bot Commands
+#### help command
+- Standard help command.
+
+#### helpbgr command
+- Help command for background removal.
+#### rembg command
+- The command accepts an attachment or a reference attachment, meaning you can either invoke the command with an image you uploaded, or reply to a message that has an image.
 
 Run `main_bot.py` to start the bot.

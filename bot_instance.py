@@ -2,7 +2,7 @@ import logging
 from nextcord import ClientUser
 from nextcord import Activity, ActivityType, Intents
 from nextcord.ext.commands import Bot
-from configuration.bot_config import BOT_TOKEN, COMMAND_PREFIX, ACTIVITY_TEXT
+from configuration.bot_config import BOT_TOKEN, COMMAND_PREFIX
 
 logger = logging.getLogger("nextcord")
 
@@ -34,16 +34,16 @@ class BotClientBase:
         raise Exception("Bot failed to connect.")
 
     @staticmethod
-    def _get_token():
+    def _get_token() -> str:
         return BOT_TOKEN
 
     @staticmethod
-    def _get_prefix():
+    def _get_prefix() -> str:
         return COMMAND_PREFIX
 
-    @staticmethod
-    def _get_activity():
-        return ACTIVITY_TEXT
+    def _get_activity(self):
+        prefix = self._get_prefix()
+        return f"{prefix}help"
 
 
 class BotClient(BotClientBase):

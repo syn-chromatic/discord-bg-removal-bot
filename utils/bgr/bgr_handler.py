@@ -49,20 +49,22 @@ from exceptions.media_exceptions import (
 
 
 class MediaHandlerBase:
-    def __init__(self, ctx: Context, url: str):
+    def __init__(self, ctx: Context, file: nextcord.File):
         self._ctx = ctx
-        self._url = url
+        self._file = file
         self._mime_config = MimeTypeConfig()
 
     async def _validate_mime_type(self) -> str:
         async with ContextHTTPFile() as cf:
-            mime_type = await cf.ensure_mime_type(self._url, self._mime_config)
+            mime_type = await cf.ensure_mime_type_from_file(
+                self._file, self._mime_config
+            )
         return mime_type
 
-    async def _get_response_file(self) -> BytesIO:
-        async with ContextHTTPFile() as cf:
-            bytes_io = await cf.get_file_from_url(self._url)
-        return bytes_io
+    async def _get_file_io(self) -> BytesIO:
+        file_bytes = self._file.fp.read()
+        file_io = BytesIO(file_bytes)
+        return file_io
 
     def _retrieve_data(
         self, bytes_io: BytesIO, mime_type: str
@@ -103,7 +105,7 @@ class MediaHandler(MediaHandlerBase):
     async def handler(self) -> Union[nextcord.File, None]:
         """Handle the type of media and removes the background."""
         mime_type = await self._validate_mime_type()
-        bytes_io = await self._get_response_file()
+        bytes_io = await self._get_file_io()
 
         data = await asyncio.to_thread(self._retrieve_data, bytes_io, mime_type)
 

@@ -14,14 +14,14 @@ class IteratorBase:
 
     @staticmethod
     def _initial_embed_form() -> EmbedForm:
-        embed_form = EmbedForm()
+        embed_form = EmbedForm().set_white()
         embed_form.set_description("Initializing..")
         return embed_form
 
     @staticmethod
     def _iteration_embed_form(idx: int, total_idx: int, image_io: BytesIO) -> EmbedForm:
         description = f"Processed {idx} out of {total_idx} frames."
-        embed_form = EmbedForm()
+        embed_form = EmbedForm().set_white()
         embed_form.set_description(description)
         embed_form.set_image_file(image_io)
         return embed_form

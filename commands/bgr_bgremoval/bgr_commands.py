@@ -1,6 +1,6 @@
 from nextcord.ext.commands import Context
 
-from utils.general_utils import EmbedForm
+from utils.general_utils import EmbedForm, ContextAttachment
 from utils.bgr.bgr_handler import MediaHandler
 from exceptions.bot_exceptions import BaseBotException
 from exceptions.exception_logging import ExceptionLogger
@@ -14,16 +14,18 @@ bot = client.get_bot()
 @bot.command(description="")
 async def rembg(ctx: Context):
     """Command to remove the background of images or videos."""
-    if not ctx.message.attachments:
+    file_attachment = await ContextAttachment(ctx).any_file_attachment()
+    if not file_attachment:
         embed_form = EmbedForm().as_error()
-        embed_form.set_description("Upload an image with the command.")
+        embed_form.set_description(
+            "Upload an image with the command, "
+            "or reply to a message that has an attachment."
+        )
         await embed_form.ctx_reply(ctx, mention=False)
         return
 
-    media_url = ctx.message.attachments[0].url
-
     try:
-        file = await MediaHandler(ctx, media_url).handler()
+        file = await MediaHandler(ctx, file_attachment).handler()
         if file:
             await ctx.reply(file=file, mention_author=False)
 

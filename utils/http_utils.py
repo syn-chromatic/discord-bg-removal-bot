@@ -1,12 +1,14 @@
 from aiohttp import ClientResponse, ClientSession
 from sniffpy.mimetype import parse_mime_type
+from sniffpy import sniff
 from nextcord.ext.commands import Context
+from nextcord import Attachment, File
 
 from io import BytesIO
 from typing import Union
 
 from utils.bgr.bgr_dataclasses import MimeTypeConfig
-from exceptions.exception_logging import ExceptionLogger
+from logger.exception_logging import ExceptionLogger
 from exceptions.bot_exceptions import ContextAttachmentUnavailable
 from exceptions.http_exceptions import (
     ResponseConnectionError,
@@ -77,6 +79,14 @@ class ContextHTTPBase:
             return self._response
         return await self._setup_response(url)
 
+    async def _get_mime_type_file(self, file: File) -> str:
+        file_bytes = file.fp.read()
+        content_type = sniff(file_bytes).__str__()
+        parse_mime = parse_mime_type(content_type)
+        mime_type = parse_mime.subtype
+        file.fp.seek(0)
+        return mime_type
+
     async def _get_mime_type(self, url: str) -> str:
         response = await self._get_response(url)
         content_type = response.content_type
@@ -117,6 +127,14 @@ class ContextHTTPFile(ContextHTTPBase):
             return mime_type
         raise UnsupportedMimeType(mime_type)
 
+    async def ensure_mime_type_from_file(
+        self, file: File, mime_config: MimeTypeConfig
+    ) -> str:
+        mime_type = await self._get_mime_type_file(file)
+        if mime_type in mime_config.mime_types:
+            return mime_type
+        raise UnsupportedMimeType(mime_type)
+
     async def get_ctx_attachment_url(self, ctx: Context) -> str:
         attachment_url = await self._get_attachment_url(ctx)
         return attachment_url
@@ -127,5 +145,10 @@ class ContextHTTPFile(ContextHTTPBase):
 
     async def get_file_from_ctx(self, ctx: Context) -> BytesIO:
         attachment_url = await self._get_attachment_url(ctx)
+        bytes_io = await self._from_url(attachment_url)
+        return bytes_io
+
+    async def get_file_from_attachment(self, attachment: Attachment) -> BytesIO:
+        attachment_url = attachment.url
         bytes_io = await self._from_url(attachment_url)
         return bytes_io
