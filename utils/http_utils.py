@@ -79,7 +79,8 @@ class ContextHTTPBase:
             return self._response
         return await self._setup_response(url)
 
-    async def _get_mime_type_file(self, file: File) -> str:
+    @staticmethod
+    async def _get_mime_type_file(file: File) -> str:
         file_bytes = file.fp.read()
         content_type = sniff(file_bytes).__str__()
         parse_mime = parse_mime_type(content_type)

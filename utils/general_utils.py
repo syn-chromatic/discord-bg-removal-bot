@@ -79,7 +79,8 @@ class EmbedFormBase:
             return
         kwargs.update({"view": self._view})
 
-    def _add_mention_kwarg(self, kwargs: dict[str, Any], mention: bool) -> None:
+    @staticmethod
+    def _add_mention_kwarg(kwargs: dict[str, Any], mention: bool) -> None:
         kwargs.update({"mention_author": mention})
 
     @staticmethod
