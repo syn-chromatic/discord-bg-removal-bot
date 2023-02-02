@@ -18,7 +18,8 @@ class HelpMenuBase:
         self._embed_form = self._get_embed_form()
         self._bot_prefix = str(bot.command_prefix)
 
-    def _get_embed_form(self):
+    @staticmethod
+    def _get_embed_form() -> EmbedForm:
         embed_form = EmbedForm().set_white()
         return embed_form
 
@@ -51,7 +52,8 @@ class HelpMenuBase:
         concat_desc = self._description + "\n\n" + input_desc_str
         self._embed_form.set_description(concat_desc)
 
-    def _get_input_type_header(self, input_type: Optional[CommandInputType]) -> str:
+    @staticmethod
+    def _get_input_type_header(input_type: Optional[CommandInputType]) -> str:
         if input_type:
             return input_type.header
         return ""
@@ -78,7 +80,8 @@ class HelpMenuBase:
             field_name += f" {input_header}"
         return field_name
 
-    def _get_field_value(self, value: str):
+    @staticmethod
+    def _get_field_value(value: str):
         return f"*{value}*"
 
     @staticmethod
