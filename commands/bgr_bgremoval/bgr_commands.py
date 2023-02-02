@@ -3,7 +3,7 @@ from nextcord.ext.commands import Context
 from utils.general_utils import EmbedForm, ContextAttachment
 from utils.bgr.bgr_handler import MediaHandler
 from exceptions.bot_exceptions import BaseBotException
-from exceptions.exception_logging import ExceptionLogger
+from logger.exception_logging import ExceptionLogger
 
 from bot_instance import BotClient
 

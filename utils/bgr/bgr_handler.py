@@ -13,7 +13,7 @@ from nextcord.ext.commands import Context
 
 from utils.http_utils import ContextHTTPFile
 from utils.bgr.bgr_utils import BGProcess
-from exceptions.exception_logging import ExceptionLogger
+from logger.exception_logging import ExceptionLogger
 
 from configuration.command_variables.bgr_variables import (
     MAX_FRAMES,
