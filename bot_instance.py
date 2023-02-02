@@ -1,7 +1,11 @@
 import logging
-from nextcord import ClientUser
+from typing import Optional
+
+
+from nextcord import User, ClientUser
 from nextcord import Activity, ActivityType, Intents
 from nextcord.ext.commands import Bot
+
 from configuration.bot_config import BOT_TOKEN, COMMAND_PREFIX
 
 logger = logging.getLogger("nextcord")
@@ -13,6 +17,7 @@ class BotClientBase:
         self._prefix = self._get_prefix()
         self._activity = self._get_activity()
         self._bot_client = self._set_bot()
+        self._owner_id: Optional[int] = None
 
     def _set_bot(self) -> Bot:
         intents = Intents.all()
@@ -57,11 +62,38 @@ class BotClient(BotClientBase):
             super(cls, cls.instance).__init__(*args, **kwargs)
         return cls.instance
 
-    def get_bot(self) -> Bot:
-        return self._bot_client
-
     def run_bot(self):
         self._run_bot()
 
+    def get_bot(self) -> Bot:
+        return self._bot_client
+
     def get_client_user(self) -> ClientUser:
         return self._get_client_user()
+
+    def get_client_name(self) -> str:
+        client = self.get_client_user()
+        return str(client)
+
+    def get_client_avatar(self) -> str:
+        client = self.get_client_user()
+        if client.avatar:
+            return client.avatar.url
+        return ""
+
+    def get_owner(self) -> Optional[User]:
+        bot = self.get_bot()
+        if self._owner_id is not None:
+            return bot.get_user(self._owner_id)
+
+    def get_owner_name(self) -> str:
+        owner = self.get_owner()
+        if owner:
+            return str(owner)
+        return ""
+
+    def get_owner_avatar(self) -> str:
+        owner = self.get_owner()
+        if owner and owner.avatar:
+            return owner.avatar.url
+        return ""
