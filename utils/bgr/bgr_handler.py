@@ -56,7 +56,7 @@ class MediaHandlerBase:
 
     async def _validate_mime_type(self) -> str:
         async with ContextHTTPFile() as cf:
-            mime_type = await cf.ensure_mime_type_from_file(
+            mime_type = await cf.assert_mime_type_from_file(
                 self._file, self._mime_config
             )
         return mime_type

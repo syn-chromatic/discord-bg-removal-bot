@@ -56,12 +56,12 @@ class ImageIO(ImageIOBase):
     def __init__(self, bytes_io: BytesIO):
         super().__init__(bytes_io)
 
-    def evaluate_format(self, formats: list[Type[PILFormat]]):
+    def assert_format(self, formats: list[Type[PILFormat]]):
         image_format = self._get_image_format()
         if not self._eval_format(formats):
             raise UnsupportedFileType(image_format)
 
-    def evaluate_resolution(self, min_dim: int, max_dim: int):
+    def assert_resolution(self, min_dim: int, max_dim: int):
         image_format = self._get_image_format()
         width, height = self._image.size
 
@@ -71,7 +71,7 @@ class ImageIO(ImageIOBase):
         if not self._eval_min_px(min_dim):
             raise SubceedsMinResolution(image_format, width, height, min_dim)
 
-    def evaluate_frame_count(self, max_frames: int):
+    def assert_frame_count(self, max_frames: int):
         image_format = self._get_image_format()
         frame_count = self._get_frame_count()
         if frame_count > max_frames:

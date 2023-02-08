@@ -122,13 +122,13 @@ class ContextHTTPFile(ContextHTTPBase):
         mime_type = await self._get_mime_type(url)
         return mime_type
 
-    async def ensure_mime_type(self, url: str, mime_config: MimeTypeConfig) -> str:
+    async def assert_mime_type(self, url: str, mime_config: MimeTypeConfig) -> str:
         mime_type = await self._get_mime_type(url)
         if mime_type in mime_config.mime_types:
             return mime_type
         raise UnsupportedMimeType(mime_type)
 
-    async def ensure_mime_type_from_file(
+    async def assert_mime_type_from_file(
         self, file: File, mime_config: MimeTypeConfig
     ) -> str:
         mime_type = await self._get_mime_type_file(file)
