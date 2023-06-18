@@ -1,24 +1,25 @@
-# 🤖 Discord Background Removal Bot
+# Discord Background Removal Bot
 Automatic background removals with support for PNGs, JPEGs, WEBPs, GIFs and MP4s.
 
-
-## 📽️ Preview
-*Video - 482x640 / 37 frames, CPU processing takes approximately 1 minute*
-
-![](https://github.com/Syn-dromatic/discord-bg-removal-bot/blob/main/preview/preview.gif)
+___
+## `➢` Table of Contents
+1. [Installation](#-installation)
+2. [Configuration](#-configuration)
+4. [Commands](#-commands)
+5. [Preview](#-preview)
 
 ___
-## 📋 Prerequisites 
-This library requires [Python 3.9](https://www.python.org/downloads/release/python-3910)
+## `➢` Installation
+`Requires Python >= 3.9`
 
-Make sure to select 'Add Python 3.9 to PATH' during installation.
+### `⤷` Installing Python Dependencies
+`pip install -r requirements.txt`
 
-___
+### `⤷` Installing ImageMagick
+**Version Required:** `ImageMagick 7.1.x Q16+HDRI-dll` 
 
+**Windows:** https://imagemagick.org/script/download.php#windows
 
-## 🛠️ Installation
-1. Install dependencies: `pip install -r requirements.txt`.
-2. Install ImageMagick 7.1.x Q16+HDRI-dll (Windows version available [here](https://imagemagick.org/script/download.php#windows)). 
 
 Make sure the architecture matches your Python version (x64 or x86). 
 
@@ -28,25 +29,33 @@ During installation, select the following options:
    - Install FFMPEG
 
 ___
+## `➢` Configuration
+### `⤷` Required Variables
+File Location: `/configuration/bot_config.py`
 
-## ⚙️ Configuration
-Required variables can be found in `/configuration/bot_config.py`
-#### Required Variables
-- BOT_TOKEN — Acquired from Discord Developer Portal after creating a bot application
-- COMMAND_PREFIX — A single-character string to invoke bot commands (e.g. "$")
+- `BOT_TOKEN` — Acquired from Discord Developer Portal after creating a bot application
+- `COMMAND_PREFIX` — A single-character string to invoke bot commands (e.g. "$")
+
+
+### `⤷` Optional Variables
+File Location: `/configuration/command_variables/bgr_variables.py`
+
+- `MAX_FRAMES` — Maximum number of frames allowed for multi-frame inputs
+- `MAX_PX_IMAGE` — Maximum pixel count (width or height) allowed for single-frame inputs
+- `MAX_PX_ANIMATED` — Maximum pixel count (width or height) allowed for multi-frame inputs
 
 ___
-## ⚙️ Optional Configuration
-Optional variables can be found in `/configuration/command_variables/bgr_variables.py`
-#### Rembg Command Variables
-- MAX_FRAMES — Maximum number of frames allowed for multi-frame inputs
-- MAX_PX_IMAGE — Maximum pixel count (width or height) allowed for single-frame inputs
-- MAX_PX_ANIMATED — Maximum pixel count (width or height) allowed for multi-frame inputs
+## `➢` Commands
+| Command  | Description                           |
+| :------: | :-----------------------------------: |
+| help     | Standard Help Command                 |
+| helpbgr  | Help Command For Background Removal   |
+| rembg    | Background Removal [^1]               |
 
 ___
-## 📚 Commands
-- help: Standard help command
-- helpbgr: Help command for background removal
-- rembg: Command for background removal; *accepts an attachment or a reference attachment (either upload an image or reply to a message containing an image)*
+## `➢` Preview
+### `⤷` Background Removal - \[MP4 482x640 \* 37f\]
+![](https://github.com/Syn-dromatic/discord-bg-removal-bot/blob/main/preview/preview.gif)
 
-Run `main_bot.py` to start the bot.
+
+[^1]: Accepts an attachment or a reference attachment, meaning it could either be an uploaded image, or a reply to a message containing an uploaded image.
