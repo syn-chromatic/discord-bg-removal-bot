@@ -10,20 +10,20 @@ ___
 
 ___
 ## `➢` Installation
-`Requires Python >= 3.9`
+&emsp; `Requires Python >= 3.9`
 
 ### `⤷` Installing Python Dependencies
-`pip install -r requirements.txt`
+&emsp; `pip install -r requirements.txt`
 
 ### `⤷` Installing ImageMagick
-**Version Required:** `ImageMagick 7.1.x Q16+HDRI-dll` 
+&emsp; **Version Required:** `ImageMagick 7.1.x Q16+HDRI-dll` 
 
-**Windows:** https://imagemagick.org/script/download.php#windows
+&emsp; **Download:** https://imagemagick.org/script/download.php
 
+&emsp; Make sure the architecture matches your Python version (x64 or x86). 
 
-Make sure the architecture matches your Python version (x64 or x86). 
+- During installation, select the following options:
 
-During installation, select the following options:
    - Add application directory to your system path
    - Install development headers and libraries for C and C++
    - Install FFMPEG
@@ -31,18 +31,18 @@ During installation, select the following options:
 ___
 ## `➢` Configuration
 ### `⤷` Required Variables
-File Location: `/configuration/bot_config.py`
+- File Location: `/configuration/bot_config.py`
 
-- `BOT_TOKEN` — Acquired from Discord Developer Portal after creating a bot application
-- `COMMAND_PREFIX` — A single-character string to invoke bot commands (e.g. "$")
+   - `BOT_TOKEN` — Acquired from Discord Developer Portal after creating a bot application
+   - `COMMAND_PREFIX` — A single-character string to invoke bot commands (e.g. "$")
 
 
 ### `⤷` Optional Variables
-File Location: `/configuration/command_variables/bgr_variables.py`
+- File Location: `/configuration/command_variables/bgr_variables.py`
 
-- `MAX_FRAMES` — Maximum number of frames allowed for multi-frame inputs
-- `MAX_PX_IMAGE` — Maximum pixel count (width or height) allowed for single-frame inputs
-- `MAX_PX_ANIMATED` — Maximum pixel count (width or height) allowed for multi-frame inputs
+   - `MAX_FRAMES` — Maximum number of frames allowed for multi-frame inputs
+   - `MAX_PX_IMAGE` — Maximum pixel count (width or height) allowed for single-frame inputs
+   - `MAX_PX_ANIMATED` — Maximum pixel count (width or height) allowed for multi-frame inputs
 
 ___
 ## `➢` Commands
