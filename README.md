@@ -10,7 +10,7 @@ ___
 
 ___
 ## `➢` Installation
-&emsp; `Requires Python >= 3.9`
+`Requires Python >= 3.9`
 
 ### `⤷` Installing Python Dependencies
 &emsp; `pip install -r requirements.txt`
