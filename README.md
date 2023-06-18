@@ -16,11 +16,10 @@ ___
 &emsp; `pip install -r requirements.txt`
 
 ### `⤷` Installing ImageMagick
-&emsp; **Version Required:** `ImageMagick 7.1.x Q16+HDRI-dll` 
-
+&emsp; **Version Used:** `ImageMagick 7.1.x Q16+HDRI`\
 &emsp; **Download:** https://imagemagick.org/script/download.php
 
-&emsp; Make sure the architecture matches your Python version (x64 or x86). 
+&emsp; `Make sure the architecture matches your Python version (x64 or x86).`
 
 - During installation, select the following options:
 
